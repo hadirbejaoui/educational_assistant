@@ -58,6 +58,8 @@ class CourseDocument(models.Model):
         return result
 
 
+
+
 class DocumentPage(models.Model):
     """Texte d'une page. Rempli en Phase 4."""
 
@@ -77,3 +79,34 @@ class DocumentPage(models.Model):
 
     def __str__(self):
         return f"{self.document.title} - page {self.page_number}"
+    
+    
+    
+    
+    
+class DocumentChunk(models.Model):
+    """Passage d'un document, prêt pour la recherche (embeddings en Phase 7)."""
+
+    document = models.ForeignKey(
+        CourseDocument, on_delete=models.CASCADE, related_name="chunks"
+    )
+    chunk_index = models.PositiveIntegerField()
+    text = models.TextField()
+    page_start = models.PositiveIntegerField()
+    page_end = models.PositiveIntegerField()
+    chapter = models.CharField(max_length=255, blank=True)
+    char_count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["chunk_index"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["document", "chunk_index"], name="unique_chunk_per_document"
+            )
+        ]
+        indexes = [models.Index(fields=["document", "page_start"])]
+
+    def __str__(self):
+        return f"{self.document.title} - passage {self.chunk_index}"
+    
+    

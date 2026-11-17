@@ -12,14 +12,36 @@
         <li>Taille : {{ document.file_size|filesizeformat }}</li>
         <li>Importé le : {{ document.uploaded_at|date:"d/m/Y H:i" }}</li>
         <li>Pages extraites : {{ document.page_count }}</li>
+        <li>Passages (chunks) : {{ chunk_count }}</li>
     </ul>
     {% if document.error_message %}
         <p class="error">{{ document.error_message }}</p>
     {% endif %}
-    <p class="meta">L'extraction du texte sera disponible à la prochaine phase.</p>
-   <div class="actions">
-    <a class="btn btn-danger" href="{% url 'courses:delete' document.pk %}">Supprimer</a>
-    <a href="{% url 'courses:list' %}">Retour</a>
-</div>
+
+    <div class="actions">
+        <form method="post" action="{% url 'courses:reprocess' document.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn">Retraiter</button>
+        </form>
+        <a class="btn btn-danger" href="{% url 'courses:delete' document.pk %}">Supprimer</a>
+        <a href="{% url 'courses:list' %}">Retour</a>
+    </div>
+
+    {% if chunks %}
+    <h2>Aperçu des passages</h2>
+    {% for chunk in chunks %}
+    <div class="chunk">
+        <p class="meta">
+            Passage {{ chunk.chunk_index|add:1 }} ·
+            {% if chunk.page_start == chunk.page_end %}page {{ chunk.page_start }}{% else %}pages {{ chunk.page_start }} à {{ chunk.page_end }}{% endif %}
+            {% if chunk.chapter %} · {{ chunk.chapter }}{% endif %}
+        </p>
+        <p>{{ chunk.text|truncatechars:300 }}</p>
+    </div>
+    {% endfor %}
+    {% if chunk_count > 10 %}
+    <p class="meta">… et {{ chunk_count|add:"-10" }} autre(s) passage(s).</p>
+    {% endif %}
+    {% endif %}
 </div>
 {% endblock %}

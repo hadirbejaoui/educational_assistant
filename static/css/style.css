@@ -41,3 +41,7 @@ a { color: #2563eb; text-decoration: none; }
 .btn-danger:hover { background: #b91c1c; }
 .actions { margin-top: 1.5rem; display: flex; align-items: center; gap: 1rem; }
 .btn { display: inline-block; text-decoration: none; }
+.alert-warning { background: #fef9c3; color: #854d0e; }
+.chunk { border-left: 3px solid #cbd5e1; padding: 0.2rem 0 0.2rem 1rem; margin: 1rem 0; }
+.chunk p { margin: 0.3rem 0; }
+.actions form { display: inline; }
