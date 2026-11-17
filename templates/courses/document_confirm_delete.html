@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Supprimer{% endblock %}
+
+{% block content %}
+<div class="card narrow">
+    <h1>Supprimer ce cours ?</h1>
+    <p>« {{ document.title }} » et toutes ses données associées seront définitivement supprimés.</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Oui, supprimer</button>
+        <a href="{% url 'courses:detail' document.pk %}">Annuler</a>
+    </form>
+</div>
+{% endblock %}

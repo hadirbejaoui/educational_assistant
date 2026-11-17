@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Mes cours{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Mes cours</h1>
+    <a class="btn" href="{% url 'courses:upload' %}">+ Importer un cours</a>
+</div>
+
+{% if documents %}
+<div class="grid">
+    {% for doc in documents %}
+    <div class="card doc-card">
+        <h2><a href="{% url 'courses:detail' doc.pk %}">{{ doc.title }}</a></h2>
+        <p class="meta">
+            <span class="badge">{{ doc.get_file_type_display }}</span>
+            <span class="badge badge-{{ doc.status }}">{{ doc.get_status_display }}</span>
+        </p>
+        <p class="meta">Importé le {{ doc.uploaded_at|date:"d/m/Y H:i" }}</p>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card">
+    <p>Vous n'avez encore importé aucun cours.</p>
+</div>
+{% endif %}
+{% endblock %}

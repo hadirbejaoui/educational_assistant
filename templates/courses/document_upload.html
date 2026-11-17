@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Importer un cours{% endblock %}
+
+{% block content %}
+<div class="card narrow">
+    <h1>Importer un cours</h1>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% include "includes/form_fields.html" %}
+        <button type="submit" class="btn">Importer</button>
+        <a href="{% url 'courses:list' %}">Annuler</a>
+    </form>
+</div>
+{% endblock %}

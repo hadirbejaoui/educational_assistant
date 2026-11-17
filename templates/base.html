@@ -14,6 +14,7 @@
             {% if user.is_authenticated %}
                 <a href="{% url 'dashboard' %}">Tableau de bord</a>
                 <a href="{% url 'accounts:profile' %}">Profil ({{ user.username }})</a>
+                <a href="{% url 'courses:list' %}">Mes cours</a>
                 <form method="post" action="{% url 'accounts:logout' %}" class="inline-form">
                     {% csrf_token %}
                     <button type="submit" class="link-button">Déconnexion</button>
@@ -21,6 +22,7 @@
             {% else %}
                 <a href="{% url 'accounts:login' %}">Connexion</a>
                 <a href="{% url 'accounts:register' %}">Inscription</a>
+                
             {% endif %}
         </nav>
     </header>
@@ -38,5 +40,6 @@
     </main>
 
     <script src="{% static 'js/main.js' %}"></script>
+    
 </body>
 </html>

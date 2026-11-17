@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}{{ document.title }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>{{ document.title }}</h1>
+    <p class="meta">
+        <span class="badge">{{ document.get_file_type_display }}</span>
+        <span class="badge badge-{{ document.status }}">{{ document.get_status_display }}</span>
+    </p>
+    <ul>
+        <li>Taille : {{ document.file_size|filesizeformat }}</li>
+        <li>Importé le : {{ document.uploaded_at|date:"d/m/Y H:i" }}</li>
+        <li>Pages extraites : {{ document.page_count }}</li>
+    </ul>
+    {% if document.error_message %}
+        <p class="error">{{ document.error_message }}</p>
+    {% endif %}
+    <p class="meta">L'extraction du texte sera disponible à la prochaine phase.</p>
+   <div class="actions">
+    <a class="btn btn-danger" href="{% url 'courses:delete' document.pk %}">Supprimer</a>
+    <a href="{% url 'courses:list' %}">Retour</a>
+</div>
+</div>
+{% endblock %}
