@@ -1,0 +1,42 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Assistant pédagogique{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <header class="topbar">
+        <a class="brand" href="{% url 'dashboard' %}">Assistant pédagogique</a>
+        <nav>
+            {% if user.is_authenticated %}
+                <a href="{% url 'dashboard' %}">Tableau de bord</a>
+                <a href="{% url 'accounts:profile' %}">Profil ({{ user.username }})</a>
+                <form method="post" action="{% url 'accounts:logout' %}" class="inline-form">
+                    {% csrf_token %}
+                    <button type="submit" class="link-button">Déconnexion</button>
+                </form>
+            {% else %}
+                <a href="{% url 'accounts:login' %}">Connexion</a>
+                <a href="{% url 'accounts:register' %}">Inscription</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <main class="container">
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="{% static 'js/main.js' %}"></script>
+</body>
+</html>
