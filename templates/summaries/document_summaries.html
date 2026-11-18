@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Résumés - {{ document.title }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>Résumés : {{ document.title }}</h1>
+    <p class="meta">La génération peut prendre plusieurs minutes avec un modèle Hugging Face. Ne fermez pas la page.</p>
+    <a href="{% url 'courses:detail' document.pk %}">← Retour au cours</a>
+</div>
+
+{% for item in levels %}
+<div class="card summary-box">
+    <h2>Résumé {{ item.label|lower }}</h2>
+    {% if item.summary %}
+        <p class="meta">
+            Généré le {{ item.summary.updated_at|date:"d/m/Y H:i" }}
+            · {{ item.summary.provider }}
+            · {{ item.summary.section_count }} section(s)
+        </p>
+        {{ item.summary.content|linebreaks }}
+    {% else %}
+        <p class="meta">Pas encore généré.</p>
+    {% endif %}
+    <form method="post" action="{% url 'summaries:generate' document.pk item.value %}" data-loading="Génération en cours…">
+        {% csrf_token %}
+        <button type="submit" class="btn">{% if item.summary %}Régénérer{% else %}Générer{% endif %}</button>
+    </form>
+</div>
+{% endfor %}
+{% endblock %}

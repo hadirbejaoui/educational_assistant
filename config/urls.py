@@ -10,6 +10,7 @@ urlpatterns = [
     path("accounts/", include("accounts.urls")),
     path("courses/", include("courses.urls")),
     path("", accounts_views.dashboard, name="dashboard"),
+    path("summaries/", include("summaries.urls")),
 ]
 
 if settings.DEBUG:

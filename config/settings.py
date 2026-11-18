@@ -97,3 +97,10 @@ MAX_UPLOAD_SIZE_MB = 20
 ALLOWED_UPLOAD_EXTENSIONS = [".pdf", ".txt"]
 CHUNK_SIZE = 800        # caractères par chunk
 CHUNK_OVERLAP = 100     # chevauchement entre chunks
+# Résumés (phase 5)
+SUMMARY_PROVIDER = os.getenv("SUMMARY_PROVIDER", "extractive")
+SUMMARY_MODEL_NAME = os.getenv(
+    "SUMMARY_MODEL_NAME", "csebuetnlp/mT5_multilingual_XLSum"
+)
+SUMMARY_SECTION_CHARS = 1800   # taille d'une section envoyée au modèle
+SUMMARY_MAX_SECTIONS = 80      # garde-fou pour les modèles lents
