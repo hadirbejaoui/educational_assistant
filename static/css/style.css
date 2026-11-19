@@ -55,3 +55,21 @@ label.choice { cursor: pointer; }
 label.choice:hover { background: #f1f5f9; }
 .choice-correct { background: #dcfce7; border-color: #86efac; }
 .choice-wrong { background: #fee2e2; border-color: #fca5a5; }
+
+
+.chat-messages { max-height: 60vh; overflow-y: auto; padding: 1rem; margin: 1rem 0;
+                 background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
+.chat-message { display: flex; flex-direction: column; margin-bottom: 1rem; }
+.chat-user { align-items: flex-end; }
+.chat-assistant, .chat-error { align-items: flex-start; }
+.chat-bubble { white-space: pre-wrap; max-width: 85%; padding: 0.7rem 1rem;
+               border-radius: 14px; background: #e2e8f0; }
+.chat-user .chat-bubble { background: #2563eb; color: #fff; }
+.chat-error .chat-bubble { background: #fee2e2; color: #991b1b; }
+.chat-pending .chat-bubble { opacity: 0.6; font-style: italic; }
+.chat-sources { list-style: none; padding: 0; margin: 0.4rem 0 0; max-width: 85%; font-size: 0.85rem; }
+.chat-sources li { margin: 0.3rem 0; padding-left: 0.6rem; border-left: 3px solid #e2e8f0; }
+.chat-sources li.cited { border-left-color: #2563eb; }
+.chat-form { display: flex; gap: 0.5rem; align-items: flex-end; }
+.chat-form textarea { flex: 1; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 8px;
+                      font: inherit; resize: vertical; }

@@ -12,6 +12,7 @@ urlpatterns = [
     path("", accounts_views.dashboard, name="dashboard"),
     path("summaries/", include("summaries.urls")),
     path("quizzes/", include("quizzes.urls")),
+    path("chatbot/", include("chatbot.urls")),
 ]
 
 if settings.DEBUG:

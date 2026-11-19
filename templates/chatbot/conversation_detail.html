@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ conversation.title }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="page-header">
+        <div>
+            <h1>{{ conversation.title }}</h1>
+            <p class="meta">
+                Cours : <a href="{% url 'courses:detail' conversation.document.pk %}">{{ conversation.document.title }}</a>
+                · réponses uniquement à partir de ce cours
+            </p>
+        </div>
+        <form method="post" action="{% url 'chatbot:delete' conversation.pk %}" data-confirm="Supprimer cette conversation ?">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Supprimer</button>
+        </form>
+    </div>
+
+    <div id="chat-messages" class="chat-messages">
+        {% for message in chat_messages %}
+        <div class="chat-message chat-{{ message.role }}">
+            <div class="chat-bubble">{{ message.content }}</div>
+            {% if message.sources %}
+            <ul class="chat-sources">
+                {% for source in message.sources %}
+                <li class="{% if source.cited %}cited{% endif %}">
+                    <strong>[{{ source.n }}] {% if source.page_start == source.page_end %}page {{ source.page_start }}{% else %}pages {{ source.page_start }} à {{ source.page_end }}{% endif %}{% if source.chapter %} · {{ source.chapter }}{% endif %}</strong>
+                    <span class="meta"> — {{ source.excerpt }}…</span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+        {% empty %}
+        <p class="meta" id="chat-empty">Posez votre première question sur ce cours.</p>
+        {% endfor %}
+    </div>
+
+    <form id="chat-form" class="chat-form" method="post" action="{% url 'chatbot:send' conversation.pk %}">
+        {% csrf_token %}
+        <textarea name="message" rows="2" maxlength="{{ max_chars }}" placeholder="Posez une question sur ce cours…" required></textarea>
+        <button type="submit" class="btn">Envoyer</button>
+    </form>
+    <p class="meta">Les réponses viennent d'un petit modèle local : vérifiez-les avec les pages indiquées sous chaque réponse.</p>
+</div>
+{% endblock %}
+
+{% block extra_js %}<script src="{% static 'js/chat.js' %}"></script>{% endblock %}

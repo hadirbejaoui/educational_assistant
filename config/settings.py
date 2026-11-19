@@ -118,3 +118,8 @@ EMBEDDING_BATCH_SIZE = 16
 EMBEDDING_QUERY_PREFIX = "query: "      # propre à e5 ; vide pour d'autres modèles
 EMBEDDING_PASSAGE_PREFIX = "passage: "
 RETRIEVAL_TOP_K = 5
+# Chatbot RAG (phase 8)
+RAG_MIN_SCORE = float(os.getenv("RAG_MIN_SCORE", "0.83"))
+RAG_MAX_CONTEXT_CHARS = 4500
+RAG_HISTORY_MESSAGES = 4
+RAG_MAX_QUESTION_CHARS = 1000

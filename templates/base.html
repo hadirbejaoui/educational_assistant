@@ -17,6 +17,7 @@
                 <a href="{% url 'courses:list' %}">Mes cours</a>
                 <a href="{% url 'summaries:list' %}">Résumés</a>
                 <a href="{% url 'quizzes:list' %}">Quiz</a>
+                <a href="{% url 'chatbot:list' %}">Chatbot</a>
                 <form method="post" action="{% url 'accounts:logout' %}" class="inline-form">
                     {% csrf_token %}
                     <button type="submit" class="link-button">Déconnexion</button>
@@ -42,6 +43,7 @@
     </main>
 
     <script src="{% static 'js/main.js' %}"></script>
+        {% block extra_js %}{% endblock %}
     
 </body>
 </html>
