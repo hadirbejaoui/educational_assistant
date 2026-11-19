@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Mes quiz{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Mes quiz</h1>
+    <a class="btn" href="{% url 'quizzes:create' %}">+ Nouveau quiz</a>
+</div>
+
+{% if quizzes %}
+<div class="grid">
+    {% for quiz in quizzes %}
+    <div class="card doc-card">
+        <h2><a href="{% url 'quizzes:detail' quiz.pk %}">{{ quiz.title }}</a></h2>
+        <p class="meta">
+            <span class="badge">{{ quiz.get_difficulty_display }}</span>
+            <span class="badge">{{ quiz.question_count }} question(s)</span>
+        </p>
+        <p class="meta">{{ quiz.created_at|date:"d/m/Y H:i" }}</p>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card"><p>Aucun quiz. Cliquez sur « Nouveau quiz » pour en générer un.</p></div>
+{% endif %}
+{% endblock %}

@@ -16,6 +16,7 @@
                 <a href="{% url 'accounts:profile' %}">Profil ({{ user.username }})</a>
                 <a href="{% url 'courses:list' %}">Mes cours</a>
                 <a href="{% url 'summaries:list' %}">Résumés</a>
+                <a href="{% url 'quizzes:list' %}">Quiz</a>
                 <form method="post" action="{% url 'accounts:logout' %}" class="inline-form">
                     {% csrf_token %}
                     <button type="submit" class="link-button">Déconnexion</button>

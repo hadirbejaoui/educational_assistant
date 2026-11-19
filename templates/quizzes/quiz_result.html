@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Résultat{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>Résultat : {{ attempt.score }}/{{ attempt.total }}</h1>
+    <p>Note : <strong>{{ attempt.grade_out_of_20 }}/20</strong> ({{ attempt.percent }} %)</p>
+    <a href="{% url 'quizzes:take' attempt.quiz.pk %}" class="btn">Réessayer</a>
+    <a href="{% url 'quizzes:detail' attempt.quiz.pk %}">Retour au quiz</a>
+</div>
+
+{% for answer in answers %}
+<div class="card question">
+    <h3>{{ forloop.counter }}. {{ answer.question.text }}
+        {% if answer.is_correct %}<span class="badge badge-ready">Correct</span>
+        {% else %}<span class="badge badge-failed">Faux</span>{% endif %}
+    </h3>
+    {% for choice in answer.question.choices.all %}
+    <p class="choice {% if choice.is_correct %}choice-correct{% elif choice.id == answer.selected_choice_id %}choice-wrong{% endif %}">
+        {{ choice.text }}
+        {% if choice.is_correct %}✔{% elif choice.id == answer.selected_choice_id %}✘ (votre réponse){% endif %}
+    </p>
+    {% endfor %}
+    {% if not answer.selected_choice %}<p class="meta">Pas de réponse.</p>{% endif %}
+    <p class="meta"><strong>Explication :</strong> {{ answer.question.explanation }}</p>
+</div>
+{% endfor %}
+{% endblock %}

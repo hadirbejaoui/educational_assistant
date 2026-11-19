@@ -104,3 +104,10 @@ SUMMARY_MODEL_NAME = os.getenv(
 )
 SUMMARY_SECTION_CHARS = 1800   # taille d'une section envoyée au modèle
 SUMMARY_MAX_SECTIONS = 80      # garde-fou pour les modèles lents
+# LLM et quiz (phase 6)
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "").strip().lower()
+LLM_API_KEY = os.getenv("LLM_API_KEY", "")
+LLM_MODEL = os.getenv("LLM_MODEL", "").strip()
+LLM_TIMEOUT = int(os.getenv("LLM_TIMEOUT", "90"))
+QUIZ_MAX_QUESTIONS = 20
+LLM_BASE_URL = os.getenv("LLM_BASE_URL", "").strip()

@@ -48,3 +48,10 @@ a { color: #2563eb; text-decoration: none; }
 .summary-box { margin-top: 1rem; }
 .summary-box h2 { margin-top: 0; }
 .btn:disabled { opacity: 0.6; cursor: wait; }
+.question { margin-top: 1rem; }
+.question h3 { margin-top: 0; }
+.choice { display: block; padding: 0.5rem 0.8rem; margin: 0.3rem 0; border: 1px solid #e2e8f0; border-radius: 8px; }
+label.choice { cursor: pointer; }
+label.choice:hover { background: #f1f5f9; }
+.choice-correct { background: #dcfce7; border-color: #86efac; }
+.choice-wrong { background: #fee2e2; border-color: #fca5a5; }

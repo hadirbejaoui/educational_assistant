@@ -11,6 +11,7 @@ urlpatterns = [
     path("courses/", include("courses.urls")),
     path("", accounts_views.dashboard, name="dashboard"),
     path("summaries/", include("summaries.urls")),
+    path("quizzes/", include("quizzes.urls")),
 ]
 
 if settings.DEBUG:
