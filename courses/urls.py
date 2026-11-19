@@ -10,4 +10,6 @@ urlpatterns = [
     path("<int:pk>/", views.document_detail, name="detail"),
     path("<int:pk>/delete/", views.document_delete, name="delete"),
     path("<int:pk>/reprocess/", views.document_reprocess, name="reprocess"),
+    path("<int:pk>/index/", views.document_index, name="index"),
+    path("<int:pk>/search/", views.document_search, name="search"),
 ]

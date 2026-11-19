@@ -12,6 +12,7 @@
         <li>Taille : {{ document.file_size|filesizeformat }}</li>
         <li>Importé le : {{ document.uploaded_at|date:"d/m/Y H:i" }}</li>
         <li>Pages extraites : {{ document.page_count }}</li>
+        <li>Passages indexés : {{ indexed_count }} / {{ chunk_count }}</li>
         <li>Passages (chunks) : {{ chunk_count }}</li>
     </ul>
     {% if document.error_message %}
@@ -24,6 +25,11 @@
             <button type="submit" class="btn">Retraiter</button>
         </form>
         <a class="btn" href="{% url 'quizzes:create' %}?document={{ document.pk }}">Créer un quiz</a>
+                <form method="post" action="{% url 'courses:index' document.pk %}" data-loading="Indexation en cours…">
+            {% csrf_token %}
+            <button type="submit" class="btn">Indexer</button>
+        </form>
+        <a class="btn" href="{% url 'courses:search' document.pk %}">Rechercher</a>
         <a class="btn btn-danger" href="{% url 'courses:delete' document.pk %}">Supprimer</a>
         <a href="{% url 'courses:list' %}">Retour</a>
     </div>

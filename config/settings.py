@@ -111,3 +111,10 @@ LLM_MODEL = os.getenv("LLM_MODEL", "").strip()
 LLM_TIMEOUT = int(os.getenv("LLM_TIMEOUT", "90"))
 QUIZ_MAX_QUESTIONS = 20
 LLM_BASE_URL = os.getenv("LLM_BASE_URL", "").strip()
+# Embeddings et recherche (phase 7)
+EMBEDDING_MODEL_NAME = os.getenv("EMBEDDING_MODEL_NAME", "intfloat/multilingual-e5-small")
+EMBEDDING_DIMENSIONS = 384
+EMBEDDING_BATCH_SIZE = 16
+EMBEDDING_QUERY_PREFIX = "query: "      # propre à e5 ; vide pour d'autres modèles
+EMBEDDING_PASSAGE_PREFIX = "passage: "
+RETRIEVAL_TOP_K = 5

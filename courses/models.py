@@ -1,5 +1,6 @@
 import os
 import uuid
+from pgvector.django import HnswIndex, VectorField
 
 from django.conf import settings
 from django.db import models
@@ -96,6 +97,8 @@ class DocumentChunk(models.Model):
     page_end = models.PositiveIntegerField()
     chapter = models.CharField(max_length=255, blank=True)
     char_count = models.PositiveIntegerField(default=0)
+    embedding = VectorField(dimensions=settings.EMBEDDING_DIMENSIONS, null=True, blank=True)
+    embedding_model = models.CharField(max_length=120, blank=True)
 
     class Meta:
         ordering = ["chunk_index"]
@@ -104,8 +107,16 @@ class DocumentChunk(models.Model):
                 fields=["document", "chunk_index"], name="unique_chunk_per_document"
             )
         ]
-        indexes = [models.Index(fields=["document", "page_start"])]
-
+        indexes = [
+            models.Index(fields=["document", "page_start"]),
+            HnswIndex(
+                name="chunk_embedding_hnsw",
+                fields=["embedding"],
+                m=16,
+                ef_construction=64,
+                opclasses=["vector_cosine_ops"],
+            ),
+        ]
     def __str__(self):
         return f"{self.document.title} - passage {self.chunk_index}"
     

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Recherche - {{ document.title }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>Recherche : {{ document.title }}</h1>
+    <form method="get" data-loading="Recherche…">
+        <div class="form-group">
+            <input class="form-control" type="text" name="q" value="{{ query }}" placeholder="Posez une question sur ce cours">
+        </div>
+        <button type="submit" class="btn">Rechercher</button>
+        <a href="{% url 'courses:detail' document.pk %}">Retour</a>
+    </form>
+
+    {% if query %}
+        {% if hits %}
+            {% for hit in hits %}
+            <div class="chunk">
+                <p class="meta">
+                    Score {{ hit.score|floatformat:3 }} ·
+                    {% if hit.chunk.page_start == hit.chunk.page_end %}page {{ hit.chunk.page_start }}{% else %}pages {{ hit.chunk.page_start }} à {{ hit.chunk.page_end }}{% endif %}
+                    {% if hit.chunk.chapter %} · {{ hit.chunk.chapter }}{% endif %}
+                </p>
+                <p>{{ hit.chunk.text }}</p>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="meta">Aucun résultat. Le document est-il indexé ? Cliquez sur « Indexer » dans la page du cours.</p>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}
