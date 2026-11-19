@@ -3,6 +3,7 @@ import shutil
 import tempfile
 from unittest.mock import patch
 from llm import LLMError, get_llm_client
+from llm.ollama import _strip_reasoning
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import SimpleTestCase, TestCase, override_settings
@@ -293,3 +294,19 @@ class LLMConfigTests(SimpleTestCase):
     def test_gemini_still_needs_api_key(self):
         with self.assertRaises(LLMError):
             get_llm_client()
+    
+    
+    
+    
+   
+
+
+class OllamaCleaningTests(SimpleTestCase):
+    def test_complete_think_block_is_removed(self):
+        self.assertEqual(_strip_reasoning("<think>blabla</think>Réponse."), "Réponse.")
+
+    def test_reasoning_without_opening_tag_is_removed(self):
+        self.assertEqual(_strip_reasoning("Je réfléchis...\n</think>\n\nRéponse."), "Réponse.")
+
+    def test_plain_answer_is_unchanged(self):
+        self.assertEqual(_strip_reasoning("Réponse."), "Réponse.")
