@@ -1,25 +1,28 @@
 {% extends "base.html" %}
+{% load ui %}
 {% block title %}Mes résumés{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>Mes résumés</h1>
-</div>
+{% page_header title="Mes résumés" subtitle=summaries.paginator.count|stringformat:"d résumé(s), du plus récent au plus ancien" %}{% endpage_header %}
 
 {% if summaries %}
-<div class="grid">
+<div class="card-grid">
     {% for summary in summaries %}
-    <div class="card doc-card">
-        <h2><a href="{% url 'summaries:document' summary.document.pk %}">{{ summary.document.title }}</a></h2>
-        <p class="meta"><span class="badge">{{ summary.get_level_display }}</span></p>
-        <p>{{ summary.content|truncatechars:200 }}</p>
-        <p class="meta">{{ summary.updated_at|date:"d/m/Y H:i" }}</p>
-    </div>
+    <article class="card item-card">
+        <div class="card__body">
+            <div class="cluster"><span class="badge badge-info">{{ summary.get_level_display }}</span></div>
+            <h2 class="item-card__title"><a href="{% url 'summaries:document' summary.document.pk %}">{{ summary.document.title }}</a></h2>
+            <p class="item-card__excerpt">{{ summary.content|truncatechars:220 }}</p>
+            <p class="meta"><span class="meta__item">{% include "includes/icon.html" with name="clock" %}{{ summary.updated_at|date:"d/m/Y H:i" }}</span></p>
+        </div>
+    </article>
     {% endfor %}
 </div>
+{% include "includes/pagination.html" with page=summaries %}
 {% else %}
 <div class="card">
-    <p>Aucun résumé pour le moment. Ouvrez un cours, puis cliquez sur « Résumés ».</p>
+    {% url 'courses:list' as courses_url %}
+    {% include "includes/empty_state.html" with icon="file-text" title="Aucun résumé pour le moment" text="Ouvrez un cours, puis choisissez « Résumés » pour en générer un." action_url=courses_url action_label="Voir mes cours" action_icon="book" %}
 </div>
 {% endif %}
 {% endblock %}

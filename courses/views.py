@@ -3,6 +3,8 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
+from core.pagination import paginate
+
 from .forms import DocumentUploadForm
 from .models import CourseDocument
 from .services.processing import process_document
@@ -32,7 +34,7 @@ def _report_processing(request, document):
 
 @login_required
 def document_list(request):
-    documents = _user_documents(request.user)
+    documents = paginate(request, _user_documents(request.user))
     return render(request, "courses/document_list.html", {"documents": documents})
 
 
@@ -50,7 +52,11 @@ def document_upload(request):
     else:
         form = DocumentUploadForm()
 
-    return render(request, "courses/document_upload.html", {"form": form})
+    return render(
+        request,
+        "courses/document_upload.html",
+        {"form": form, "max_mb": settings.MAX_UPLOAD_SIZE_MB},
+    )
 
 
 @login_required
@@ -63,8 +69,11 @@ def document_detail(request, pk):
         "indexed_count": document.chunks.filter(
             embedding__isnull=False, embedding_model=settings.EMBEDDING_MODEL_NAME
         ).count(),
+        "summary_count": document.summaries.count(),
+        "quiz_count": document.quizzes.count(),
+        "conversation_count": document.conversations.count(),
     }
-    
+
     return render(request, "courses/document_detail.html", context)
 
 

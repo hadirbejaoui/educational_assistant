@@ -1,0 +1,25 @@
+{% load ui %}<!DOCTYPE html>
+{# Page autonome : Django la rend sans contexte (ni utilisateur, ni base de données). #}
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Erreur serveur · Assistant pédagogique</title>
+    {% include "includes/styles.html" %}
+</head>
+<body>
+{% include "includes/icons.html" %}
+<main id="main" class="auth">
+    <div class="auth__box">
+        <div class="card">
+            <div class="empty-state">
+                <p class="error-code" aria-hidden="true">500</p>
+                <h1 class="empty-state__title">Erreur du serveur</h1>
+                <p class="empty-state__text">Un problème inattendu s'est produit. Vos données ne sont pas perdues : réessayez dans un instant.</p>
+                <a class="btn" href="/">{% include "includes/icon.html" with name="home" %}Retour à l'accueil</a>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

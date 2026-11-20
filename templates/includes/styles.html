@@ -1,0 +1,10 @@
+{% load ui %}{% comment %}
+Point d'entrée unique des feuilles de style (utilisé par base.html et 500.html).
+L'ordre compte : jetons -> base -> mise en page -> composants -> pages.
+{% asset %} ajoute ?v=<date de modification> : le navigateur recharge un fichier dès qu'il change.
+{% endcomment %}
+<link rel="stylesheet" href="{% asset 'css/tokens.css' %}">
+<link rel="stylesheet" href="{% asset 'css/base.css' %}">
+<link rel="stylesheet" href="{% asset 'css/layout.css' %}">
+<link rel="stylesheet" href="{% asset 'css/components.css' %}">
+<link rel="stylesheet" href="{% asset 'css/pages.css' %}">

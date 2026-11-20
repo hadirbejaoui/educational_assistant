@@ -1,14 +1,47 @@
 {% extends "base.html" %}
+{% load ui %}
 {% block title %}Importer un cours{% endblock %}
 
 {% block content %}
-<div class="card narrow">
-    <h1>Importer un cours</h1>
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {% include "includes/form_fields.html" %}
-        <button type="submit" class="btn">Importer</button>
-        <a href="{% url 'courses:list' %}">Annuler</a>
-    </form>
+{% url 'courses:list' as list_url %}
+{% page_header title="Importer un cours" subtitle="PDF ou TXT. Les PDF scannés (images) ne sont pas lus." back_url=list_url back_label="Mes cours" %}{% endpage_header %}
+
+<div class="card card-narrow">
+    <div class="card__body">
+        <form method="post" enctype="multipart/form-data" data-upload-form
+              data-loading="Import et analyse du fichier en cours…">
+            {% csrf_token %}
+            {% for error in form.non_field_errors %}
+                <div class="alert alert-error" role="alert">{% include "includes/icon.html" with name="error" %}<p class="alert__text">{{ error }}</p></div>
+            {% endfor %}
+
+            <div class="form-group{% if form.file.errors %} has-error{% endif %}">
+                <span class="form-label" id="file-label">Fichier du cours <span class="required-mark" aria-hidden="true">*</span></span>
+                <label class="dropzone" for="{{ form.file.id_for_label }}" data-dropzone>
+                    <span class="dropzone__icon">{% include "includes/icon.html" with name="upload" %}</span>
+                    <span class="dropzone__title">Glissez-déposez votre fichier ici</span>
+                    <span class="dropzone__hint">ou cliquez pour le choisir · {{ max_mb }} Mo maximum</span>
+                    {{ form.file }}
+                    <span class="dropzone__file" data-dropzone-file aria-live="polite"></span>
+                </label>
+                <p class="form-error" data-dropzone-error role="alert" hidden></p>
+                {% for error in form.file.errors %}<p class="form-error" role="alert">{% include "includes/icon.html" with name="error" %}{{ error }}</p>{% endfor %}
+            </div>
+
+            <div class="form-group{% if form.title.errors %} has-error{% endif %}">
+                <label for="{{ form.title.id_for_label }}">{{ form.title.label }}</label>
+                {{ form.title }}
+                <span class="form-help">Facultatif : par défaut, le nom du fichier.</span>
+                {% for error in form.title.errors %}<p class="form-error" role="alert">{% include "includes/icon.html" with name="error" %}{{ error }}</p>{% endfor %}
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn">{% include "includes/icon.html" with name="upload" %}Importer</button>
+                <a class="btn btn-ghost" href="{% url 'courses:list' %}">Annuler</a>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}
+
+{% block extra_js %}<script src="{% asset 'js/upload.js' %}"></script>{% endblock %}

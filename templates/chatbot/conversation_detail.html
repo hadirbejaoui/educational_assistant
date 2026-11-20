@@ -1,50 +1,59 @@
 {% extends "base.html" %}
-{% load static %}
+{% load ui %}
 {% block title %}{{ conversation.title }}{% endblock %}
 
 {% block content %}
-<div class="card">
-    <div class="page-header">
-        <div>
-            <h1>{{ conversation.title }}</h1>
-            <p class="meta">
-                Cours : <a href="{% url 'courses:detail' conversation.document.pk %}">{{ conversation.document.title }}</a>
-                · réponses uniquement à partir de ce cours
-            </p>
-        </div>
-        <form method="post" action="{% url 'chatbot:delete' conversation.pk %}" data-confirm="Supprimer cette conversation ?">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-danger">Supprimer</button>
-        </form>
-    </div>
+{% url 'chatbot:list' as list_url %}
+{% page_header title=conversation.title subtitle="Cours : "|add:conversation.document.title back_url=list_url back_label="Conversations" %}
+    <a class="btn btn-secondary btn-sm" href="{% url 'courses:detail' conversation.document.pk %}">{% include "includes/icon.html" with name="book" %}Voir le cours</a>
+    <form method="post" action="{% url 'chatbot:delete' conversation.pk %}" data-confirm="Supprimer cette conversation ?">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-ghost btn-sm">{% include "includes/icon.html" with name="trash" %}Supprimer</button>
+    </form>
+{% endpage_header %}
 
-    <div id="chat-messages" class="chat-messages">
+<section class="card chat" aria-label="Conversation">
+    <div id="chat-messages" class="chat__messages" role="log" aria-live="polite" aria-label="Messages de la conversation">
         {% for message in chat_messages %}
-        <div class="chat-message chat-{{ message.role }}">
-            <div class="chat-bubble">{{ message.content }}</div>
-            {% if message.sources %}
-            <ul class="chat-sources">
-                {% for source in message.sources %}
-                <li class="{% if source.cited %}cited{% endif %}">
-                    <strong>[{{ source.n }}] {% if source.page_start == source.page_end %}page {{ source.page_start }}{% else %}pages {{ source.page_start }} à {{ source.page_end }}{% endif %}{% if source.chapter %} · {{ source.chapter }}{% endif %}</strong>
-                    <span class="meta"> — {{ source.excerpt }}…</span>
-                </li>
-                {% endfor %}
-            </ul>
+        <div class="message message--{{ message.role }}">
+            <div class="message__bubble">{{ message.content }}</div>
+            <span class="message__meta">{% if message.role == "user" %}Vous{% else %}Assistant{% endif %} · <time datetime="{{ message.created_at|date:'c' }}">{{ message.created_at|date:"d/m H:i" }}</time></span>
+            {% if message.role == "assistant" %}
+            <div class="message__tools">
+                <button type="button" class="btn btn-ghost btn-sm" data-copy>{% include "includes/icon.html" with name="copy" %}<span data-copy-label>Copier</span></button>
+                {% if message.sources %}
+                <details class="sources">
+                    <summary>Sources ({{ message.sources|length }})</summary>
+                    <ol class="source-list">
+                        {% for source in message.sources %}
+                        <li class="source{% if source.cited %} is-cited{% endif %}">
+                            <span class="source__number" aria-hidden="true">{{ source.n }}</span>
+                            <span class="source__pages">{% if source.page_start == source.page_end %}page {{ source.page_start }}{% else %}pages {{ source.page_start }} à {{ source.page_end }}{% endif %}{% if source.cited %} · citée dans la réponse{% endif %}</span>
+                            {% if source.chapter %}<span class="source__chapter">{{ source.chapter }}</span>{% endif %}
+                            <span class="source__excerpt">« {{ source.excerpt }}… »</span>
+                        </li>
+                        {% endfor %}
+                    </ol>
+                </details>
+                {% endif %}
+            </div>
             {% endif %}
         </div>
         {% empty %}
-        <p class="meta" id="chat-empty">Posez votre première question sur ce cours.</p>
+        <p class="chat__empty" id="chat-empty">Posez votre première question sur ce cours.<br><span class="text-small">Les réponses s'appuient uniquement sur son contenu.</span></p>
         {% endfor %}
     </div>
 
-    <form id="chat-form" class="chat-form" method="post" action="{% url 'chatbot:send' conversation.pk %}">
+    <form id="chat-form" class="composer" method="post" action="{% url 'chatbot:send' conversation.pk %}"
+          data-timeout="{{ timeout_seconds }}">
         {% csrf_token %}
-        <textarea name="message" rows="2" maxlength="{{ max_chars }}" placeholder="Posez une question sur ce cours…" required></textarea>
-        <button type="submit" class="btn">Envoyer</button>
+        <label class="sr-only" for="chat-input">Votre question</label>
+        <textarea id="chat-input" class="form-control composer__input" name="message" rows="1" maxlength="{{ max_chars }}"
+                  placeholder="Posez une question sur ce cours…" required aria-describedby="chat-hint"></textarea>
+        <button type="submit" class="btn">{% include "includes/icon.html" with name="send" %}<span>Envoyer</span></button>
     </form>
-    <p class="meta">Les réponses viennent d'un petit modèle local : vérifiez-les avec les pages indiquées sous chaque réponse.</p>
-</div>
+    <p class="composer__help" id="chat-hint">Entrée pour envoyer · Maj+Entrée pour aller à la ligne · un modèle local répond souvent en une à deux minutes.</p>
+</section>
 {% endblock %}
 
-{% block extra_js %}<script src="{% static 'js/chat.js' %}"></script>{% endblock %}
+{% block extra_js %}<script src="{% asset 'js/chat.js' %}"></script>{% endblock %}

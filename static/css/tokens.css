@@ -1,0 +1,113 @@
+/* =====================================================================
+   tokens.css - les « jetons » du design system
+   ---------------------------------------------------------------------
+   Un jeton est une variable qui porte une décision de design (une couleur,
+   un espacement...). Les autres fichiers n'écrivent JAMAIS de valeur en dur :
+   ils utilisent ces variables. Changer un jeton change toute l'application.
+
+   Les noms sont « sémantiques » (--color-text, --color-surface) et non
+   « littéraux » (--gray-900) : un thème sombre n'aurait qu'à redéfinir ces
+   variables dans un @media (prefers-color-scheme: dark), sans toucher au reste.
+
+   Contrastes (WCAG AA = 4.5:1 pour le texte normal), mesurés sur fond blanc :
+   --color-text #111827 : 17.7:1   --color-text-muted #4b5563 : 7.6:1
+   --color-accent #1d4ed8 : 6.7:1  --color-danger #b91c1c : 6.5:1
+   --color-success #15803d : 5.0:1 --color-warning #92400e : 7.1:1
+   Texte blanc sur --color-accent : 6.7:1 ; sur --color-danger : 6.5:1.
+   ===================================================================== */
+
+:root {
+    /* --- Couleurs : neutres --- */
+    --color-bg: #f5f7fa;              /* fond de page */
+    --color-surface: #ffffff;         /* cartes, barre latérale */
+    --color-surface-muted: #f9fafb;   /* zones secondaires (messages, faits) */
+    --color-surface-hover: #f3f4f6;
+    --color-border: #e5e7eb;
+    --color-border-strong: #d1d5db;
+    --color-text: #111827;
+    --color-text-muted: #4b5563;
+    --color-text-subtle: #6b7280;     /* 4.8:1 : textes secondaires courts */
+
+    /* --- Couleurs : accent (une seule couleur d'accent, le bleu) --- */
+    --color-accent: #1d4ed8;
+    --color-accent-hover: #1e40af;
+    --color-accent-soft: #eff6ff;
+    --color-accent-border: #bfdbfe;
+    --color-on-accent: #ffffff;
+
+    /* --- Couleurs : états --- */
+    --color-success: #15803d;
+    --color-success-soft: #f0fdf4;
+    --color-success-border: #bbf7d0;
+    --color-warning: #92400e;
+    --color-warning-soft: #fffbeb;
+    --color-warning-border: #fde68a;
+    --color-danger: #b91c1c;
+    --color-danger-hover: #991b1b;
+    --color-danger-soft: #fef2f2;
+    --color-danger-border: #fecaca;
+    --color-info: #1d4ed8;
+    --color-info-soft: #eff6ff;
+    --color-info-border: #bfdbfe;
+    --color-neutral-soft: #f3f4f6;    /* badge « Importé » */
+
+    --color-focus: #2563eb;
+    --color-overlay: rgba(17, 24, 39, 0.5);
+
+    /* --- Typographie (polices système : rien à télécharger, fonctionne hors ligne) --- */
+    --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-mono: ui-monospace, "Cascadia Code", Consolas, monospace;
+    --text-xs: 0.75rem;    /* 12 px */
+    --text-sm: 0.875rem;   /* 14 px */
+    --text-base: 1rem;     /* 16 px */
+    --text-lg: 1.125rem;   /* 18 px */
+    --text-xl: 1.25rem;    /* 20 px */
+    --text-2xl: 1.5rem;    /* 24 px */
+    --text-3xl: 1.875rem;  /* 30 px */
+    --leading-tight: 1.25;
+    --leading-normal: 1.6;
+    --weight-medium: 500;
+    --weight-semibold: 600;
+    --weight-bold: 700;
+
+    /* --- Espacements : multiples de 4 px --- */
+    --space-1: 0.25rem;   /*  4 px */
+    --space-2: 0.5rem;    /*  8 px */
+    --space-3: 0.75rem;   /* 12 px */
+    --space-4: 1rem;      /* 16 px */
+    --space-5: 1.25rem;   /* 20 px */
+    --space-6: 1.5rem;    /* 24 px */
+    --space-8: 2rem;      /* 32 px */
+    --space-10: 2.5rem;   /* 40 px */
+    --space-12: 3rem;     /* 48 px */
+
+    /* --- Rayons et ombres --- */
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-full: 999px;
+    --shadow-sm: 0 1px 2px rgba(17, 24, 39, 0.05);
+    --shadow-md: 0 1px 3px rgba(17, 24, 39, 0.08), 0 1px 2px rgba(17, 24, 39, 0.04);
+    --shadow-lg: 0 12px 32px rgba(17, 24, 39, 0.18);
+
+    /* --- Tailles des contrôles --- */
+    --control-height: 40px;
+    --control-height-sm: 32px;
+    --nav-item-height: 44px;   /* cible tactile minimale recommandée */
+    --icon-size: 20px;
+
+    /* --- Largeurs de mise en page --- */
+    --sidebar-width: 264px;
+    --content-max-width: 1100px;
+    --content-padding: var(--space-6);   /* au moins 24 px sur les côtés */
+    --mobile-header-height: 56px;
+
+    /* --- Superpositions (z-index) --- */
+    --z-header: 20;
+    --z-overlay: 40;
+    --z-drawer: 50;
+    --z-skip-link: 100;
+
+    /* --- Mouvement --- */
+    --transition-fast: 150ms ease;
+}

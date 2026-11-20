@@ -1,26 +1,40 @@
 {% extends "base.html" %}
+{% load ui %}
 {% block title %}Mes quiz{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>Mes quiz</h1>
-    <a class="btn" href="{% url 'quizzes:create' %}">+ Nouveau quiz</a>
-</div>
+{% page_header title="Mes quiz" subtitle="Entraînez-vous sur vos cours et suivez vos notes." %}
+    <a class="btn btn-secondary" href="{% url 'quizzes:history' %}">{% include "includes/icon.html" with name="chart" %}Historique des notes</a>
+    <a class="btn" href="{% url 'quizzes:create' %}">{% include "includes/icon.html" with name="plus" %}Nouveau quiz</a>
+{% endpage_header %}
 
 {% if quizzes %}
-<div class="grid">
+<div class="card-grid">
     {% for quiz in quizzes %}
-    <div class="card doc-card">
-        <h2><a href="{% url 'quizzes:detail' quiz.pk %}">{{ quiz.title }}</a></h2>
-        <p class="meta">
-            <span class="badge">{{ quiz.get_difficulty_display }}</span>
-            <span class="badge">{{ quiz.question_count }} question(s)</span>
-        </p>
-        <p class="meta">{{ quiz.created_at|date:"d/m/Y H:i" }}</p>
-    </div>
+    <article class="card item-card">
+        <div class="card__body">
+            <div class="cluster">
+                <span class="badge badge-info">{{ quiz.get_difficulty_display }}</span>
+                <span class="badge">{{ quiz.question_count }} question(s)</span>
+            </div>
+            <h2 class="item-card__title"><a href="{% url 'quizzes:detail' quiz.pk %}">{{ quiz.title }}</a></h2>
+            <p class="meta">
+                <span class="meta__item">{% include "includes/icon.html" with name="book" %}{{ quiz.document.title|truncatechars:40 }}</span>
+                <span class="meta__item">{% include "includes/icon.html" with name="clock" %}{{ quiz.created_at|date:"d/m/Y" }}</span>
+            </p>
+        </div>
+        <div class="card__footer">
+            <a class="btn btn-sm" href="{% url 'quizzes:take' quiz.pk %}">Passer<span class="sr-only"> le quiz {{ quiz.title }}</span></a>
+            <a class="btn btn-sm btn-secondary" href="{% url 'quizzes:detail' quiz.pk %}">Détails</a>
+        </div>
+    </article>
     {% endfor %}
 </div>
+{% include "includes/pagination.html" with page=quizzes %}
 {% else %}
-<div class="card"><p>Aucun quiz. Cliquez sur « Nouveau quiz » pour en générer un.</p></div>
+<div class="card">
+    {% url 'quizzes:create' as create_url %}
+    {% include "includes/empty_state.html" with icon="quiz" title="Aucun quiz" text="Générez un quiz à partir d'un de vos cours pour vous entraîner." action_url=create_url action_label="Nouveau quiz" %}
+</div>
 {% endif %}
 {% endblock %}

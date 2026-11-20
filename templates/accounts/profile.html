@@ -1,14 +1,39 @@
 {% extends "base.html" %}
+{% load ui %}
 {% block title %}Mon profil{% endblock %}
 
 {% block content %}
-<div class="card narrow">
-    <h1>Mon profil</h1>
-    <p>Nom d'utilisateur : <strong>{{ user.username }}</strong></p>
-    <form method="post">
-        {% csrf_token %}
-        {% include "includes/form_fields.html" %}
-        <button type="submit" class="btn">Enregistrer</button>
-    </form>
+{% page_header title="Mon profil" subtitle="Vos informations et votre activité." %}{% endpage_header %}
+
+<div class="dashboard-grid">
+    <section class="card" aria-labelledby="account-title">
+        <div class="card__header"><h2 id="account-title" class="card__title">Mon compte</h2></div>
+        <div class="card__body stack">
+            <div class="user-chip">
+                <span class="avatar" aria-hidden="true">{{ user|initials }}</span>
+                <span class="user-chip__text">
+                    <span class="user-chip__name">{{ user.get_full_name|default:user.username }}</span>
+                    <span class="user-chip__meta">@{{ user.username }} · inscrit le {{ user.date_joined|date:"d/m/Y" }}</span>
+                </span>
+            </div>
+            <dl class="facts">
+                <div><dt>Cours</dt><dd>{{ counts.documents }}</dd></div>
+                <div><dt>Résumés</dt><dd>{{ counts.summaries }}</dd></div>
+                <div><dt>Quiz</dt><dd>{{ counts.quizzes }}</dd></div>
+                <div><dt>Conversations</dt><dd>{{ counts.conversations }}</dd></div>
+            </dl>
+        </div>
+    </section>
+
+    <section class="card" aria-labelledby="edit-title">
+        <div class="card__header"><h2 id="edit-title" class="card__title">Modifier mes informations</h2></div>
+        <div class="card__body">
+            <form method="post" novalidate>
+                {% csrf_token %}
+                {% include "includes/form_fields.html" %}
+                <div class="form-actions"><button type="submit" class="btn">Enregistrer</button></div>
+            </form>
+        </div>
+    </section>
 </div>
 {% endblock %}

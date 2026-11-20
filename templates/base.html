@@ -1,49 +1,89 @@
-{% load static %}
-<!DOCTYPE html>
+{% load ui %}<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}Assistant pédagogique{% endblock %}</title>
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <title>{% block title %}Assistant pédagogique{% endblock %} · Assistant pédagogique</title>
+    {% include "includes/styles.html" %}
 </head>
 <body>
-    <header class="topbar">
-        <a class="brand" href="{% url 'dashboard' %}">Assistant pédagogique</a>
-        <nav>
-            {% if user.is_authenticated %}
-                <a href="{% url 'dashboard' %}">Tableau de bord</a>
-                <a href="{% url 'accounts:profile' %}">Profil ({{ user.username }})</a>
-                <a href="{% url 'courses:list' %}">Mes cours</a>
-                <a href="{% url 'summaries:list' %}">Résumés</a>
-                <a href="{% url 'quizzes:list' %}">Quiz</a>
-                <a href="{% url 'chatbot:list' %}">Chatbot</a>
-                <form method="post" action="{% url 'accounts:logout' %}" class="inline-form">
-                    {% csrf_token %}
-                    <button type="submit" class="link-button">Déconnexion</button>
-                </form>
-            {% else %}
-                <a href="{% url 'accounts:login' %}">Connexion</a>
-                <a href="{% url 'accounts:register' %}">Inscription</a>
-                
-            {% endif %}
-        </nav>
+{% include "includes/icons.html" %}
+<a class="skip-link" href="#main">Aller au contenu</a>
+
+{% if user.is_authenticated %}
+{% with section=request.resolver_match.app_name url_name=request.resolver_match.url_name %}
+<div class="app">
+    <header class="mobile-header">
+        <button type="button" class="menu-button" aria-controls="sidebar" aria-expanded="false"
+                aria-label="Ouvrir le menu" data-sidebar-toggle>
+            {% include "includes/icon.html" with name="menu" %}
+        </button>
+        <a class="brand" href="{% url 'dashboard' %}">
+            <span class="brand__logo">{% include "includes/icon.html" with name="graduation" %}</span>
+            Assistant pédagogique
+        </a>
     </header>
 
-    <main class="container">
-        {% if messages %}
-            <div class="messages">
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-                {% endfor %}
+    <aside id="sidebar" class="sidebar" aria-label="Menu principal" data-sidebar>
+        <div class="sidebar__top">
+            <a class="brand" href="{% url 'dashboard' %}">
+                <span class="brand__logo">{% include "includes/icon.html" with name="graduation" %}</span>
+                <span>Assistant<br>pédagogique</span>
+            </a>
+            <button type="button" class="menu-button sidebar__close" aria-label="Fermer le menu" data-sidebar-close>
+                {% include "includes/icon.html" with name="x" %}
+            </button>
+        </div>
+
+        <nav class="sidebar__nav" aria-label="Navigation principale">
+            <ul class="nav-list">
+                <li><a class="nav-link" href="{% url 'dashboard' %}" {% if url_name == "dashboard" %}aria-current="page"{% endif %}>{% include "includes/icon.html" with name="home" %}Tableau de bord</a></li>
+                <li><a class="nav-link" href="{% url 'courses:list' %}" {% if section == "courses" %}aria-current="page"{% endif %}>{% include "includes/icon.html" with name="book" %}Mes cours</a></li>
+                <li><a class="nav-link" href="{% url 'summaries:list' %}" {% if section == "summaries" %}aria-current="page"{% endif %}>{% include "includes/icon.html" with name="file-text" %}Résumés</a></li>
+                <li><a class="nav-link" href="{% url 'quizzes:list' %}" {% if section == "quizzes" %}aria-current="page"{% endif %}>{% include "includes/icon.html" with name="quiz" %}Quiz</a></li>
+                <li><a class="nav-link" href="{% url 'chatbot:list' %}" {% if section == "chatbot" %}aria-current="page"{% endif %}>{% include "includes/icon.html" with name="chat" %}Chatbot</a></li>
+                <li><a class="nav-link" href="{% url 'accounts:profile' %}" {% if url_name == "profile" %}aria-current="page"{% endif %}>{% include "includes/icon.html" with name="user" %}Profil</a></li>
+            </ul>
+        </nav>
+
+        <div class="sidebar__user">
+            <div class="user-chip">
+                <span class="avatar" aria-hidden="true">{{ user|initials }}</span>
+                <span class="user-chip__text">
+                    <span class="user-chip__name">{{ user.get_full_name|default:user.username }}</span>
+                    <span class="user-chip__meta">{{ user.email|default:user.username }}</span>
+                </span>
             </div>
-        {% endif %}
+            <form method="post" action="{% url 'accounts:logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-secondary btn-sm btn-block">{% include "includes/icon.html" with name="logout" %}Déconnexion</button>
+            </form>
+        </div>
+    </aside>
+    <div class="overlay" data-sidebar-overlay hidden></div>
 
-        {% block content %}{% endblock %}
+    <main id="main" class="main" tabindex="-1">
+        <div class="container">
+            {% include "includes/messages.html" %}
+            {% block content %}{% endblock %}
+        </div>
     </main>
+</div>
+{% endwith %}
+{% else %}
+<main id="main" class="auth" tabindex="-1">
+    <div class="auth__box">
+        <a class="brand auth__brand" href="{% url 'accounts:login' %}">
+            <span class="brand__logo">{% include "includes/icon.html" with name="graduation" %}</span>
+            Assistant pédagogique
+        </a>
+        {% include "includes/messages.html" %}
+        {% block auth_content %}{% endblock %}
+    </div>
+</main>
+{% endif %}
 
-    <script src="{% static 'js/main.js' %}"></script>
-        {% block extra_js %}{% endblock %}
-    
+<script src="{% asset 'js/main.js' %}"></script>
+{% block extra_js %}{% endblock %}
 </body>
 </html>

@@ -2,6 +2,8 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 
+from core.services.dashboard import user_counts
+
 from .forms import ProfileForm, RegisterForm
 
 
@@ -32,9 +34,8 @@ def profile(request):
     else:
         form = ProfileForm(instance=request.user)
 
-    return render(request, "accounts/profile.html", {"form": form})
-
-
-@login_required
-def dashboard(request):
-    return render(request, "dashboard.html")
+    return render(
+        request,
+        "accounts/profile.html",
+        {"form": form, "counts": user_counts(request.user)},
+    )

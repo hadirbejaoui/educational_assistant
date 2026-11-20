@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from courses.services.embeddings import EmbeddingError, get_embedder, index_document
+from core.pagination import paginate
 from llm import LLMError
 
 from .forms import NewConversationForm
@@ -26,7 +27,7 @@ def _user_conversations(user):
 
 @login_required
 def conversation_list(request):
-    conversations = _user_conversations(request.user).select_related("document")
+    conversations = paginate(request, _user_conversations(request.user).select_related("document"))
     form = NewConversationForm(request.user, initial={"document": request.GET.get("document")})
     return render(
         request,
@@ -70,6 +71,8 @@ def conversation_detail(request, pk):
             "conversation": conversation,
             "chat_messages": conversation.messages.all(),
             "max_chars": settings.RAG_MAX_QUESTION_CHARS,
+            # Le navigateur abandonne un peu après le délai du LLM côté serveur
+            "timeout_seconds": settings.LLM_TIMEOUT + 30,
         },
     )
 

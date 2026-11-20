@@ -1,0 +1,8 @@
+<div class="card">
+    <div class="empty-state">
+        <p class="error-code" aria-hidden="true">404</p>
+        <h1 class="empty-state__title">Page introuvable</h1>
+        <p class="empty-state__text">Cette page n'existe pas, ou elle appartient à un autre utilisateur.</p>
+        <a class="btn" href="{% url 'dashboard' %}">{% include "includes/icon.html" with name="home" %}Retour au tableau de bord</a>
+    </div>
+</div>

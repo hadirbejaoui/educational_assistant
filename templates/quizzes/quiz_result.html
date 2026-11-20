@@ -1,28 +1,46 @@
 {% extends "base.html" %}
-{% block title %}Résultat{% endblock %}
+{% load ui %}
+{% block title %}Résultat - {{ attempt.quiz.title }}{% endblock %}
 
 {% block content %}
-<div class="card">
-    <h1>Résultat : {{ attempt.score }}/{{ attempt.total }}</h1>
-    <p>Note : <strong>{{ attempt.grade_out_of_20 }}/20</strong> ({{ attempt.percent }} %)</p>
-    <a href="{% url 'quizzes:take' attempt.quiz.pk %}" class="btn">Réessayer</a>
-    <a href="{% url 'quizzes:detail' attempt.quiz.pk %}">Retour au quiz</a>
-</div>
+{% url 'quizzes:detail' attempt.quiz.pk as detail_url %}
+{% page_header title="Résultat" subtitle=attempt.quiz.title back_url=detail_url back_label="Retour au quiz" %}
+    <a href="{% url 'quizzes:history' %}" class="btn btn-secondary">{% include "includes/icon.html" with name="chart" %}Historique des notes</a>
+    <a href="{% url 'quizzes:take' attempt.quiz.pk %}" class="btn">{% include "includes/icon.html" with name="refresh" %}Réessayer</a>
+{% endpage_header %}
 
-{% for answer in answers %}
-<div class="card question">
-    <h3>{{ forloop.counter }}. {{ answer.question.text }}
-        {% if answer.is_correct %}<span class="badge badge-ready">Correct</span>
-        {% else %}<span class="badge badge-failed">Faux</span>{% endif %}
-    </h3>
-    {% for choice in answer.question.choices.all %}
-    <p class="choice {% if choice.is_correct %}choice-correct{% elif choice.id == answer.selected_choice_id %}choice-wrong{% endif %}">
-        {{ choice.text }}
-        {% if choice.is_correct %}✔{% elif choice.id == answer.selected_choice_id %}✘ (votre réponse){% endif %}
-    </p>
+<div class="stack-lg">
+    <section class="card" aria-labelledby="score-title">
+        <div class="card__body score">
+            <h2 id="score-title" class="sr-only">Note obtenue</h2>
+            <p class="score__value">{% include "includes/grade.html" %}</p>
+            <div class="score__details">
+                <p><strong>{{ attempt.score }} bonne(s) réponse(s) sur {{ attempt.total }}</strong> ({{ attempt.percent }} %)</p>
+                <p class="meta">Tentative du {{ attempt.completed_at|date:"d/m/Y à H:i" }}</p>
+            </div>
+        </div>
+    </section>
+
+    <h2>Correction</h2>
+    {% for answer in answers %}
+    <section class="card question" aria-labelledby="answer-{{ answer.pk }}">
+        <div class="cluster">
+            <span class="question__number">Question {{ forloop.counter }}</span>
+            {% if answer.is_correct %}<span class="badge badge-success">{% include "includes/icon.html" with name="check" %}Correct</span>
+            {% elif answer.selected_choice %}<span class="badge badge-danger">{% include "includes/icon.html" with name="x" %}Faux</span>
+            {% else %}<span class="badge badge-warning">Sans réponse</span>{% endif %}
+        </div>
+        <h3 id="answer-{{ answer.pk }}" class="question__text">{{ answer.question.text }}</h3>
+        {% for choice in answer.question.choices.all %}
+        <p class="choice {% if choice.is_correct %}choice-correct{% elif choice.id == answer.selected_choice_id %}choice-wrong{% endif %}">
+            <span class="choice__text">{{ choice.text }}</span>
+            {% if choice.is_correct and choice.id == answer.selected_choice_id %}<span class="choice__tag">✔ Votre réponse, correcte</span>
+            {% elif choice.is_correct %}<span class="choice__tag">✔ Bonne réponse</span>
+            {% elif choice.id == answer.selected_choice_id %}<span class="choice__tag">✘ Votre réponse</span>{% endif %}
+        </p>
+        {% endfor %}
+        <div class="explanation"><strong>Explication :</strong> {{ answer.question.explanation }}</div>
+    </section>
     {% endfor %}
-    {% if not answer.selected_choice %}<p class="meta">Pas de réponse.</p>{% endif %}
-    <p class="meta"><strong>Explication :</strong> {{ answer.question.explanation }}</p>
 </div>
-{% endfor %}
 {% endblock %}

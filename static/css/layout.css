@@ -1,0 +1,238 @@
+/* =====================================================================
+   layout.css - coque de l'application
+   ---------------------------------------------------------------------
+   Écrit « mobile d'abord » : les règles de base décrivent le petit écran
+   (barre latérale en tiroir), puis @media (min-width: 992px) installe la
+   grille bureau. Un seul seuil, 992 px, utilisé ici et dans main.js.
+   ===================================================================== */
+
+/* --- Lien d'évitement : invisible tant qu'il n'a pas le focus --- */
+.skip-link {
+    position: absolute;
+    top: var(--space-2);
+    left: var(--space-2);
+    z-index: var(--z-skip-link);
+    padding: var(--space-2) var(--space-4);
+    background: var(--color-surface);
+    color: var(--color-accent);
+    font-weight: var(--weight-semibold);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-150%);
+    clip-path: inset(50%);
+}
+.skip-link:focus {
+    transform: none;
+    clip-path: none;
+}
+
+/* --- Coque --- */
+.app { min-height: 100vh; }
+
+/* En-tête mobile : uniquement sous 992 px */
+.mobile-header {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-header);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    height: var(--mobile-header-height);
+    padding: 0 var(--space-4);
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.menu-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--control-height);
+    height: var(--control-height);
+    padding: 0;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text);
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+}
+.menu-button:hover { background: var(--color-surface-hover); }
+
+/* --- Marque (logo + nom) --- */
+.brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    color: var(--color-text);
+    font-weight: var(--weight-bold);
+    text-decoration: none;
+    line-height: var(--leading-tight);
+}
+.brand:hover { color: var(--color-text); }
+.brand__logo {
+    display: inline-grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border-radius: var(--radius-md);
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+}
+.brand__logo .icon { width: 22px; height: 22px; }
+
+/* --- Barre latérale (tiroir sur mobile) --- */
+.sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: var(--z-drawer);
+    display: flex;
+    flex-direction: column;
+    width: min(var(--sidebar-width), 86vw);
+    background: var(--color-surface);
+    border-right: 1px solid var(--color-border);
+    box-shadow: var(--shadow-lg);
+    transform: translateX(-100%);
+    visibility: hidden;   /* hors écran = hors du parcours clavier */
+    /* À la fermeture, visibility attend la fin du glissement (délai 150 ms)... */
+    transition: transform var(--transition-fast), visibility 0s linear 150ms;
+}
+.sidebar.is-open {
+    transform: none;
+    visibility: visible;
+    /* ... à l'ouverture, elle change tout de suite : le menu est focalisable immédiatement */
+    transition: transform var(--transition-fast), visibility 0s;
+}
+
+.sidebar__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding: var(--space-5) var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.sidebar__nav {
+    flex: 1;
+    overflow-y: auto;   /* défilement interne si le menu est long */
+    padding: var(--space-4) var(--space-3);
+}
+
+.nav-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+
+.nav-link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: var(--nav-item-height);
+    padding: 0 var(--space-3);
+    border-radius: var(--radius-md);
+    color: var(--color-text-muted);
+    font-weight: var(--weight-medium);
+    text-decoration: none;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+.nav-link:hover { background: var(--color-surface-hover); color: var(--color-text); }
+.nav-link[aria-current="page"] {
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+    font-weight: var(--weight-semibold);
+}
+/* Barre colorée à gauche de l'élément actif */
+.nav-link[aria-current="page"]::before {
+    content: "";
+    position: absolute;
+    left: calc(-1 * var(--space-3));
+    top: 8px;
+    bottom: 8px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: var(--color-accent);
+}
+
+.sidebar__user {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border-top: 1px solid var(--color-border);
+}
+.user-chip { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
+.avatar {
+    display: inline-grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border-radius: var(--radius-full);
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-bold);
+}
+.user-chip__text { display: flex; flex-direction: column; min-width: 0; line-height: var(--leading-tight); }
+.user-chip__name, .user-chip__meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.user-chip__name { font-weight: var(--weight-semibold); }
+.user-chip__meta { font-size: var(--text-xs); color: var(--color-text-subtle); }
+
+/* Tiroir ouvert : la page ne défile plus derrière */
+.has-drawer-open { overflow: hidden; }
+
+/* Fond assombri derrière le tiroir */
+.overlay {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-overlay);
+    background: var(--color-overlay);
+}
+
+/* --- Contenu --- */
+.main { min-width: 0; }
+.main:focus { outline: none; }
+.container {
+    width: 100%;
+    max-width: var(--content-max-width);
+    margin: 0 auto;
+    padding: var(--space-6) var(--content-padding) var(--space-12);
+}
+
+/* --- Pages sans barre latérale : connexion, inscription, erreurs --- */
+.auth {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: var(--space-6) var(--space-4);
+}
+.auth__box { width: 100%; max-width: 420px; }
+.auth__brand { justify-content: center; margin-bottom: var(--space-6); font-size: var(--text-lg); }
+
+/* --- Bureau : grille barre latérale + contenu --- */
+@media (min-width: 992px) {
+    .app {
+        display: grid;
+        grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+    }
+    .mobile-header,
+    .sidebar__close,
+    .overlay { display: none !important; }   /* le bouton Menu n'existe pas sur grand écran */
+
+    .sidebar {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        width: auto;
+        box-shadow: none;
+        transform: none;
+        visibility: visible;
+        transition: none;
+    }
+    .container { padding-top: var(--space-8); }
+}
+
+/* --- Petits écrans --- */
+@media (max-width: 480px) {
+    :root { --content-padding: var(--space-4); }
+}

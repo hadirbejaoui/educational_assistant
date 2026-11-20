@@ -1,0 +1,14 @@
+{% if messages %}
+<div class="alerts" aria-live="polite">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}" {% if message.tags == "error" or message.tags == "warning" %}role="alert"{% else %}role="status"{% endif %}>
+        {% if message.tags == "success" %}{% include "includes/icon.html" with name="check-circle" %}
+        {% elif message.tags == "error" %}{% include "includes/icon.html" with name="error" %}
+        {% elif message.tags == "warning" %}{% include "includes/icon.html" with name="alert" %}
+        {% else %}{% include "includes/icon.html" with name="info" %}{% endif %}
+        <p class="alert__text">{{ message }}</p>
+        <button type="button" class="alert__close" aria-label="Fermer ce message" data-dismiss-alert>{% include "includes/icon.html" with name="x" %}</button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}

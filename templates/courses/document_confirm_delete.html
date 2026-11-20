@@ -1,14 +1,19 @@
 {% extends "base.html" %}
+{% load ui %}
 {% block title %}Supprimer{% endblock %}
 
 {% block content %}
-<div class="card narrow">
-    <h1>Supprimer ce cours ?</h1>
-    <p>« {{ document.title }} » et toutes ses données associées seront définitivement supprimés.</p>
-    <form method="post">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-danger">Oui, supprimer</button>
-        <a href="{% url 'courses:detail' document.pk %}">Annuler</a>
-    </form>
+{% url 'courses:detail' document.pk as detail_url %}
+{% page_header title="Supprimer ce cours ?" back_url=detail_url back_label="Retour au cours" %}{% endpage_header %}
+
+<div class="card card-narrow">
+    <div class="card__body">
+        <div class="alert alert-warning" role="alert">{% include "includes/icon.html" with name="alert" %}<p class="alert__text">« {{ document.title }} » sera définitivement supprimé, avec ses résumés, quiz, tentatives et conversations.</p></div>
+        <form method="post" class="form-actions">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">{% include "includes/icon.html" with name="trash" %}Oui, supprimer</button>
+            <a class="btn btn-secondary" href="{{ detail_url }}">Annuler</a>
+        </form>
+    </div>
 </div>
 {% endblock %}

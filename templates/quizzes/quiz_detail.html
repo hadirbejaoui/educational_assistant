@@ -1,37 +1,51 @@
 {% extends "base.html" %}
+{% load ui %}
 {% block title %}{{ quiz.title }}{% endblock %}
 
 {% block content %}
-<div class="card">
-    <h1>{{ quiz.title }}</h1>
-    <p class="meta">
-        <span class="badge">{{ quiz.get_difficulty_display }}</span>
-        <span class="badge">{{ question_count }} question(s)</span>
-        <span class="badge">{{ quiz.provider }}</span>
-    </p>
-    <p class="meta">Cours : <a href="{% url 'courses:detail' quiz.document.pk %}">{{ quiz.document.title }}</a></p>
+{% url 'quizzes:list' as list_url %}
+{% page_header title=quiz.title subtitle=quiz.document.title back_url=list_url back_label="Mes quiz" %}
+    <a class="btn" href="{% url 'quizzes:take' quiz.pk %}">Passer le quiz</a>
+    <form method="post" action="{% url 'quizzes:delete' quiz.pk %}" data-confirm="Supprimer ce quiz et toutes ses tentatives ?">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">{% include "includes/icon.html" with name="trash" %}Supprimer</button>
+    </form>
+{% endpage_header %}
 
-    <div class="actions">
-        <a class="btn" href="{% url 'quizzes:take' quiz.pk %}">Passer le quiz</a>
-        <form method="post" action="{% url 'quizzes:delete' quiz.pk %}" data-confirm="Supprimer ce quiz et ses tentatives ?">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-danger">Supprimer</button>
-        </form>
-        <a href="{% url 'quizzes:list' %}">Retour</a>
-    </div>
+<div class="stack-lg">
+    <section class="card" aria-labelledby="info-title">
+        <div class="card__body">
+            <h2 id="info-title" class="sr-only">Informations</h2>
+            <dl class="facts">
+                <div><dt>Difficulté</dt><dd>{{ quiz.get_difficulty_display }}</dd></div>
+                <div><dt>Questions</dt><dd>{{ question_count }}</dd></div>
+                <div><dt>Modèle</dt><dd>{{ quiz.provider }}</dd></div>
+                <div><dt>Créé le</dt><dd>{{ quiz.created_at|date:"d/m/Y H:i" }}</dd></div>
+            </dl>
+        </div>
+    </section>
 
-    <h2>Historique des tentatives</h2>
-    {% if attempts %}
-    <ul>
-        {% for attempt in attempts %}
-        <li>
-            <a href="{% url 'quizzes:result' attempt.pk %}">{{ attempt.started_at|date:"d/m/Y H:i" }}</a>
-            : {{ attempt.score }}/{{ attempt.total }} ({{ attempt.grade_out_of_20 }}/20)
-        </li>
-        {% endfor %}
-    </ul>
-    {% else %}
-    <p class="meta">Aucune tentative pour le moment.</p>
-    {% endif %}
+    <section class="card" aria-labelledby="attempts-title">
+        <div class="card__header"><h2 id="attempts-title" class="card__title">Historique des tentatives</h2></div>
+        {% if attempts %}
+        <div class="table-scroll">
+            <table class="table">
+                <thead><tr><th scope="col">Date</th><th scope="col" class="num">Score</th><th scope="col" class="num">Note</th><th scope="col"><span class="sr-only">Correction</span></th></tr></thead>
+                <tbody>
+                {% for attempt in attempts %}
+                <tr>
+                    <td>{{ attempt.completed_at|date:"d/m/Y H:i" }}</td>
+                    <td class="num">{{ attempt.score }}/{{ attempt.total }}</td>
+                    <td class="num">{% include "includes/grade.html" %}</td>
+                    <td><a href="{% url 'quizzes:result' attempt.pk %}">Voir la correction</a></td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="empty-state-inline">Aucune tentative pour le moment.</p>
+        {% endif %}
+    </section>
 </div>
 {% endblock %}

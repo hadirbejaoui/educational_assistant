@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block title %}Historique des notes{% endblock %}
+
+{% block content %}
+{% url 'quizzes:list' as list_url %}
+{% page_header title="Historique des notes" subtitle=attempts.paginator.count|stringformat:"d tentative(s) terminée(s)" back_url=list_url back_label="Mes quiz" %}{% endpage_header %}
+
+{% if attempts %}
+<div class="card table-scroll">
+    <table class="table">
+        <caption class="sr-only">Tentatives de quiz, de la plus récente à la plus ancienne</caption>
+        <thead>
+            <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Quiz</th>
+                <th scope="col">Cours</th>
+                <th scope="col" class="num">Score</th>
+                <th scope="col" class="num">Note</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for attempt in attempts %}
+            <tr>
+                <td>{{ attempt.completed_at|date:"d/m/Y H:i" }}</td>
+                <td class="wrap"><a href="{% url 'quizzes:result' attempt.pk %}">{{ attempt.quiz.title }}</a></td>
+                <td class="wrap">{{ attempt.quiz.document.title }}</td>
+                <td class="num">{{ attempt.score }}/{{ attempt.total }}</td>
+                <td class="num">{% include "includes/grade.html" %}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% include "includes/pagination.html" with page=attempts %}
+{% else %}
+<div class="card">
+    {% include "includes/empty_state.html" with icon="chart" title="Aucune tentative" text="Passez un quiz pour voir vos notes ici." action_url=list_url action_label="Mes quiz" action_icon="quiz" %}
+</div>
+{% endif %}
+{% endblock %}

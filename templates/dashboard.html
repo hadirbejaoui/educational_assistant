@@ -1,9 +1,100 @@
 {% extends "base.html" %}
+{% load ui %}
 {% block title %}Tableau de bord{% endblock %}
 
 {% block content %}
+{% firstof user.first_name user.username as display_name %}
+{% page_header title="Bonjour "|add:display_name subtitle="Votre activité d'apprentissage en un coup d'œil." %}
+    <a class="btn" href="{% url 'courses:upload' %}">{% include "includes/icon.html" with name="upload" %}Importer un cours</a>
+{% endpage_header %}
+
+<section aria-labelledby="stats-title">
+    <h2 id="stats-title" class="sr-only">Compteurs</h2>
+    <div class="stats">
+        <a class="card stat" href="{% url 'courses:list' %}">
+            <span class="stat__icon">{% include "includes/icon.html" with name="book" %}</span>
+            <span><span class="stat__value">{{ counts.documents }}</span><span class="stat__label">cours</span></span>
+        </a>
+        <a class="card stat" href="{% url 'summaries:list' %}">
+            <span class="stat__icon">{% include "includes/icon.html" with name="file-text" %}</span>
+            <span><span class="stat__value">{{ counts.summaries }}</span><span class="stat__label">résumés</span></span>
+        </a>
+        <a class="card stat" href="{% url 'quizzes:list' %}">
+            <span class="stat__icon">{% include "includes/icon.html" with name="quiz" %}</span>
+            <span><span class="stat__value">{{ counts.quizzes }}</span><span class="stat__label">quiz</span></span>
+        </a>
+        <a class="card stat" href="{% url 'chatbot:list' %}">
+            <span class="stat__icon">{% include "includes/icon.html" with name="chat" %}</span>
+            <span><span class="stat__value">{{ counts.conversations }}</span><span class="stat__label">conversations</span></span>
+        </a>
+        <a class="card stat" href="{% url 'quizzes:history' %}">
+            <span class="stat__icon">{% include "includes/icon.html" with name="chart" %}</span>
+            <span><span class="stat__value">{% if average_grade is not None %}{{ average_grade }}<small>/20</small>{% else %}–{% endif %}</span><span class="stat__label">moyenne aux quiz</span></span>
+        </a>
+    </div>
+</section>
+
+{% if not counts.documents %}
 <div class="card">
-    <h1>Bonjour {{ user.first_name|default:user.username }} 👋</h1>
-    <p>Bienvenue sur votre assistant pédagogique. Vos documents, résumés, quiz et conversations apparaîtront ici dans les prochaines phases.</p>
+    {% url 'courses:upload' as upload_url %}
+    {% include "includes/empty_state.html" with icon="upload" title="Commencez par importer un cours" text="Importez un PDF ou un fichier texte : vous pourrez ensuite le résumer, générer des quiz et poser des questions au chatbot." action_url=upload_url action_label="Importer mon premier cours" action_icon="upload" %}
 </div>
+{% else %}
+<div class="dashboard-grid">
+    <section class="card" aria-labelledby="attempts-title">
+        <div class="card__header"><h2 id="attempts-title" class="card__title">Dernières notes</h2></div>
+        {% if recent_attempts %}
+        <ul class="list">
+            {% for attempt in recent_attempts %}
+            <li class="list__item">
+                <div class="list__main">
+                    <a class="list__title" href="{% url 'quizzes:result' attempt.pk %}">{{ attempt.quiz.title }}</a>
+                    <p class="meta">{{ attempt.completed_at|date:"d/m/Y H:i" }} · {{ attempt.score }}/{{ attempt.total }}</p>
+                </div>
+                {% include "includes/grade.html" %}
+            </li>
+            {% endfor %}
+        </ul>
+        <div class="card__footer"><a href="{% url 'quizzes:history' %}">Tout l'historique des notes{% include "includes/icon.html" with name="arrow-right" %}</a></div>
+        {% else %}
+        <p class="empty-state-inline">Aucune tentative. <a href="{% url 'quizzes:create' %}">Générez un quiz</a> pour vous entraîner.</p>
+        {% endif %}
+    </section>
+
+    <section class="card" aria-labelledby="documents-title">
+        <div class="card__header"><h2 id="documents-title" class="card__title">Derniers cours</h2></div>
+        <ul class="list">
+            {% for document in recent_documents %}
+            <li class="list__item">
+                <div class="list__main">
+                    <a class="list__title" href="{% url 'courses:detail' document.pk %}">{{ document.title }}</a>
+                    <p class="meta">{{ document.uploaded_at|date:"d/m/Y" }} · {{ document.page_count }} page(s)</p>
+                </div>
+                {% include "includes/status_badge.html" %}
+            </li>
+            {% endfor %}
+        </ul>
+        <div class="card__footer"><a href="{% url 'courses:list' %}">Tous mes cours{% include "includes/icon.html" with name="arrow-right" %}</a></div>
+    </section>
+
+    <section class="card" aria-labelledby="conversations-title">
+        <div class="card__header"><h2 id="conversations-title" class="card__title">Dernières conversations</h2></div>
+        {% if recent_conversations %}
+        <ul class="list">
+            {% for conversation in recent_conversations %}
+            <li class="list__item">
+                <div class="list__main">
+                    <a class="list__title" href="{% url 'chatbot:detail' conversation.pk %}">{{ conversation.title }}</a>
+                    <p class="meta">{{ conversation.document.title }} · {{ conversation.updated_at|date:"d/m/Y H:i" }}</p>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        <div class="card__footer"><a href="{% url 'chatbot:list' %}">Toutes les conversations{% include "includes/icon.html" with name="arrow-right" %}</a></div>
+        {% else %}
+        <p class="empty-state-inline">Aucune conversation. <a href="{% url 'chatbot:list' %}">Posez une question à un cours.</a></p>
+        {% endif %}
+    </section>
+</div>
+{% endif %}
 {% endblock %}

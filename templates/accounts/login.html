@@ -1,14 +1,18 @@
 {% extends "base.html" %}
 {% block title %}Connexion{% endblock %}
 
-{% block content %}
-<div class="card narrow">
-    <h1>Connexion</h1>
-    <form method="post">
-        {% csrf_token %}
-        {% include "includes/form_fields.html" %}
-        <button type="submit" class="btn">Se connecter</button>
-    </form>
-    <p>Pas de compte ? <a href="{% url 'accounts:register' %}">Inscrivez-vous</a></p>
+{% block auth_content %}
+<div class="card">
+    <div class="card__body">
+        <h1>Connexion</h1>
+        <p class="text-muted">Retrouvez vos cours, résumés et quiz.</p>
+        <form method="post" novalidate class="mt-4">
+            {% csrf_token %}
+            {% include "includes/form_fields.html" %}
+            <input type="hidden" name="next" value="{{ next }}">
+            <button type="submit" class="btn btn-block">Se connecter</button>
+        </form>
+    </div>
+    <div class="card__footer"><p class="text-small">Pas encore de compte ? <a href="{% url 'accounts:register' %}">Créer un compte</a></p></div>
 </div>
 {% endblock %}

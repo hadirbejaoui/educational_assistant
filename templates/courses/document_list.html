@@ -1,28 +1,43 @@
 {% extends "base.html" %}
+{% load ui %}
 {% block title %}Mes cours{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>Mes cours</h1>
-    <a class="btn" href="{% url 'courses:upload' %}">+ Importer un cours</a>
-</div>
+{% page_header title="Mes cours" subtitle=documents.paginator.count|stringformat:"d cours importé(s)" %}
+    <a class="btn" href="{% url 'courses:upload' %}">{% include "includes/icon.html" with name="upload" %}Importer un cours</a>
+{% endpage_header %}
 
 {% if documents %}
-<div class="grid">
+<div class="card-grid">
     {% for doc in documents %}
-    <div class="card doc-card">
-        <h2><a href="{% url 'courses:detail' doc.pk %}">{{ doc.title }}</a></h2>
-        <p class="meta">
-            <span class="badge">{{ doc.get_file_type_display }}</span>
-            <span class="badge badge-{{ doc.status }}">{{ doc.get_status_display }}</span>
-        </p>
-        <p class="meta">Importé le {{ doc.uploaded_at|date:"d/m/Y H:i" }}</p>
-    </div>
+    <article class="card item-card">
+        <div class="card__body">
+            <div class="cluster">
+                {% include "includes/status_badge.html" with document=doc %}
+                <span class="badge">{{ doc.get_file_type_display }}</span>
+            </div>
+            <h2 class="item-card__title"><a href="{% url 'courses:detail' doc.pk %}" title="{{ doc.title }}">{{ doc.title }}</a></h2>
+            <p class="meta">
+                <span class="meta__item">{% include "includes/icon.html" with name="file-text" %}{{ doc.page_count }} page(s)</span>
+                <span class="meta__item">{% include "includes/icon.html" with name="database" %}{{ doc.chunks.count }} passage(s)</span>
+                <span class="meta__item">{% include "includes/icon.html" with name="clock" %}{{ doc.uploaded_at|date:"d/m/Y" }}</span>
+            </p>
+        </div>
+        <div class="card__footer">
+            <a class="btn btn-sm" href="{% url 'courses:detail' doc.pk %}">Ouvrir<span class="sr-only"> {{ doc.title }}</span></a>
+            {% if doc.status == "ready" %}
+            <a class="btn btn-sm btn-secondary" href="{% url 'summaries:document' doc.pk %}">Résumés</a>
+            <a class="btn btn-sm btn-secondary" href="{% url 'quizzes:create' %}?document={{ doc.pk }}">Quiz</a>
+            {% endif %}
+        </div>
+    </article>
     {% endfor %}
 </div>
+{% include "includes/pagination.html" with page=documents %}
 {% else %}
 <div class="card">
-    <p>Vous n'avez encore importé aucun cours.</p>
+    {% url 'courses:upload' as upload_url %}
+    {% include "includes/empty_state.html" with icon="book" title="Aucun cours pour le moment" text="Importez un PDF ou un fichier texte pour commencer à étudier." action_url=upload_url action_label="Importer un cours" action_icon="upload" %}
 </div>
 {% endif %}
 {% endblock %}

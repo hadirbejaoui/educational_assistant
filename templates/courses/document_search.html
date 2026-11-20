@@ -1,32 +1,44 @@
 {% extends "base.html" %}
+{% load ui %}
 {% block title %}Recherche - {{ document.title }}{% endblock %}
 
 {% block content %}
-<div class="card">
-    <h1>Recherche : {{ document.title }}</h1>
-    <form method="get" data-loading="Recherche…">
-        <div class="form-group">
-            <input class="form-control" type="text" name="q" value="{{ query }}" placeholder="Posez une question sur ce cours">
+{% url 'courses:detail' document.pk as detail_url %}
+{% page_header title="Rechercher dans le cours" subtitle=document.title back_url=detail_url back_label="Retour au cours" %}{% endpage_header %}
+
+<div class="stack-lg">
+    <div class="card">
+        <div class="card__body">
+            <form method="get" role="search" data-loading="Recherche en cours…">
+                <label class="sr-only" for="search-q">Votre recherche</label>
+                <div class="search-bar">
+                    <input id="search-q" class="form-control" type="search" name="q" value="{{ query }}"
+                           placeholder="Ex. : responsabilité des associés" required>
+                    <button type="submit" class="btn">{% include "includes/icon.html" with name="search" %}Rechercher</button>
+                </div>
+            </form>
         </div>
-        <button type="submit" class="btn">Rechercher</button>
-        <a href="{% url 'courses:detail' document.pk %}">Retour</a>
-    </form>
+    </div>
 
     {% if query %}
+    <section class="card" aria-labelledby="results-title">
+        <div class="card__header"><h2 id="results-title" class="card__title">Résultats pour « {{ query }} »</h2></div>
+        <div class="card__body">
         {% if hits %}
             {% for hit in hits %}
-            <div class="chunk">
+            <div class="passage">
                 <p class="meta">
-                    Score {{ hit.score|floatformat:3 }} ·
-                    {% if hit.chunk.page_start == hit.chunk.page_end %}page {{ hit.chunk.page_start }}{% else %}pages {{ hit.chunk.page_start }} à {{ hit.chunk.page_end }}{% endif %}
-                    {% if hit.chunk.chapter %} · {{ hit.chunk.chapter }}{% endif %}
+                    <span class="badge badge-info">Similarité {{ hit.score|floatformat:3 }}</span>
+                    <span>{% if hit.chunk.page_start == hit.chunk.page_end %}page {{ hit.chunk.page_start }}{% else %}pages {{ hit.chunk.page_start }} à {{ hit.chunk.page_end }}{% endif %}{% if hit.chunk.chapter %} · {{ hit.chunk.chapter }}{% endif %}</span>
                 </p>
-                <p>{{ hit.chunk.text }}</p>
+                <p class="passage__text">{{ hit.chunk.text }}</p>
             </div>
             {% endfor %}
         {% else %}
-            <p class="meta">Aucun résultat. Le document est-il indexé ? Cliquez sur « Indexer » dans la page du cours.</p>
+            <p class="text-muted">Aucun résultat. Le document est-il indexé ? Utilisez « Indexer » sur la page du cours.</p>
         {% endif %}
+        </div>
+    </section>
     {% endif %}
 </div>
 {% endblock %}

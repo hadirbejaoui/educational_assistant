@@ -1,0 +1,2 @@
+{% comment %}Note sur 20 colorée (texte + couleur, jamais la couleur seule). Usage : with attempt=...{% endcomment %}
+<span class="grade {% if attempt.grade_out_of_20 >= 14 %}grade-good{% elif attempt.grade_out_of_20 >= 10 %}grade-average{% else %}grade-low{% endif %}">{{ attempt.grade_out_of_20 }}/20</span>

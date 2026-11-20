@@ -1,59 +1,96 @@
 {% extends "base.html" %}
+{% load ui %}
 {% block title %}{{ document.title }}{% endblock %}
 
 {% block content %}
-<div class="card">
-    <h1>{{ document.title }}</h1>
-    <p class="meta">
-        <span class="badge">{{ document.get_file_type_display }}</span>
-        <span class="badge badge-{{ document.status }}">{{ document.get_status_display }}</span>
-    </p>
-    <ul>
-        <li>Taille : {{ document.file_size|filesizeformat }}</li>
-        <li>Importé le : {{ document.uploaded_at|date:"d/m/Y H:i" }}</li>
-        <li>Pages extraites : {{ document.page_count }}</li>
-        <li>Passages indexés : {{ indexed_count }} / {{ chunk_count }}</li>
-        <li>Passages (chunks) : {{ chunk_count }}</li>
-    </ul>
+{% url 'courses:list' as list_url %}
+{% page_header title=document.title back_url=list_url back_label="Mes cours" %}
+    {% include "includes/status_badge.html" %}
+    <span class="badge">{{ document.get_file_type_display }}</span>
+{% endpage_header %}
+
+<div class="stack-lg">
     {% if document.error_message %}
-        <p class="error">{{ document.error_message }}</p>
+    <div class="alert alert-error" role="alert">{% include "includes/icon.html" with name="error" %}<p class="alert__text">{{ document.error_message }}</p></div>
     {% endif %}
 
-    <div class="actions">
-        <form method="post" action="{% url 'courses:reprocess' document.pk %}">
-            {% csrf_token %}
-            <button type="submit" class="btn">Retraiter</button>
-        </form>
-        <a class="btn" href="{% url 'quizzes:create' %}?document={{ document.pk }}">Créer un quiz</a>
-                <form method="post" action="{% url 'courses:index' document.pk %}" data-loading="Indexation en cours…">
-            {% csrf_token %}
-            <button type="submit" class="btn">Indexer</button>
-        </form>
-        <a class="btn" href="{% url 'courses:search' document.pk %}">Rechercher</a>
-                <form method="post" action="{% url 'chatbot:create' %}" data-loading="Préparation…">
-            {% csrf_token %}
-            <input type="hidden" name="document" value="{{ document.pk }}">
-            <button type="submit" class="btn">Discuter</button>
-        </form>
-        <a class="btn btn-danger" href="{% url 'courses:delete' document.pk %}">Supprimer</a>
-        <a href="{% url 'courses:list' %}">Retour</a>
+    <section class="card" aria-labelledby="facts-title">
+        <div class="card__body">
+            <h2 id="facts-title" class="sr-only">Informations</h2>
+            <dl class="facts">
+                <div><dt>Importé le</dt><dd>{{ document.uploaded_at|date:"d/m/Y H:i" }}</dd></div>
+                <div><dt>Taille</dt><dd>{{ document.file_size|filesizeformat }}</dd></div>
+                <div><dt>Pages extraites</dt><dd>{{ document.page_count }}</dd></div>
+                <div><dt>Passages</dt><dd>{{ chunk_count }}</dd></div>
+                <div><dt>Passages indexés</dt><dd>{{ indexed_count }} / {{ chunk_count }}</dd></div>
+            </dl>
+        </div>
+    </section>
+
+    <div class="action-groups">
+        {% if document.status == "ready" %}
+        <section class="card action-group" aria-labelledby="study-title">
+            <div class="card__body">
+                <h2 id="study-title" class="action-group__title">Étudier ce cours</h2>
+                <p class="action-group__hint">Résumer, s'entraîner, poser des questions ou retrouver un passage.</p>
+                <div class="cluster">
+                    <a class="btn btn-secondary" href="{% url 'summaries:document' document.pk %}">{% include "includes/icon.html" with name="file-text" %}Résumés <span class="counter">({{ summary_count }})</span></a>
+                    <a class="btn btn-secondary" href="{% url 'quizzes:create' %}?document={{ document.pk }}">{% include "includes/icon.html" with name="quiz" %}Quiz <span class="counter">({{ quiz_count }})</span></a>
+                    <form method="post" action="{% url 'chatbot:create' %}" data-loading="Préparation du cours (calcul de l'index si nécessaire)…">
+                        {% csrf_token %}
+                        <input type="hidden" name="document" value="{{ document.pk }}">
+                        <button type="submit" class="btn">{% include "includes/icon.html" with name="chat" %}Discuter</button>
+                    </form>
+                    <a class="btn btn-ghost" href="{% url 'courses:search' document.pk %}">{% include "includes/icon.html" with name="search" %}Rechercher</a>
+                </div>
+                {% if conversation_count %}<p class="meta mt-4">{{ conversation_count }} conversation(s) sur ce cours : <a href="{% url 'chatbot:list' %}">voir l'historique</a></p>{% endif %}
+            </div>
+        </section>
+        {% endif %}
+
+        <section class="card action-group" aria-labelledby="manage-title">
+            <div class="card__body">
+                <h2 id="manage-title" class="action-group__title">Gérer le document</h2>
+                <p class="action-group__hint">Indexer calcule les vecteurs de la recherche et du chatbot. Retraiter relit le fichier.</p>
+                <div class="cluster">
+                    {% if document.status == "ready" %}
+                    <form method="post" action="{% url 'courses:index' document.pk %}" data-loading="Indexation en cours…">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-secondary">Indexer</button>
+                    </form>
+                    {% endif %}
+                    <form method="post" action="{% url 'courses:reprocess' document.pk %}" data-loading="Analyse du fichier en cours…">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-secondary">Retraiter</button>
+                    </form>
+                    <a class="btn btn-danger" href="{% url 'courses:delete' document.pk %}">Supprimer</a>
+                </div>
+            </div>
+        </section>
     </div>
 
     {% if chunks %}
-    <h2>Aperçu des passages</h2>
-    {% for chunk in chunks %}
-    <div class="chunk">
-        <p class="meta">
-            Passage {{ chunk.chunk_index|add:1 }} ·
-            {% if chunk.page_start == chunk.page_end %}page {{ chunk.page_start }}{% else %}pages {{ chunk.page_start }} à {{ chunk.page_end }}{% endif %}
-            {% if chunk.chapter %} · {{ chunk.chapter }}{% endif %}
-        </p>
-        <p>{{ chunk.text|truncatechars:300 }}</p>
-    </div>
-    {% endfor %}
-    {% if chunk_count > 10 %}
-    <p class="meta">… et {{ chunk_count|add:"-10" }} autre(s) passage(s).</p>
-    {% endif %}
+    <section class="card" aria-labelledby="chunks-title">
+        <div class="card__header">
+            <h2 id="chunks-title" class="card__title">Aperçu des passages</h2>
+            <span class="meta">{{ chunks|length }} sur {{ chunk_count }}</span>
+        </div>
+        <div class="card__body">
+            {% for chunk in chunks %}
+            <details class="accordion">
+                <summary>
+                    {% include "includes/icon.html" with name="chevron-right" %}
+                    Passage {{ chunk.chunk_index|add:1 }}
+                    <span class="meta">{% if chunk.page_start == chunk.page_end %}page {{ chunk.page_start }}{% else %}pages {{ chunk.page_start }} à {{ chunk.page_end }}{% endif %}{% if chunk.chapter %} · {{ chunk.chapter }}{% endif %}</span>
+                </summary>
+                <div class="accordion__body">{{ chunk.text|linebreaksbr }}</div>
+            </details>
+            {% endfor %}
+            {% if chunk_count > 10 %}
+            <p class="meta mt-4">… et {{ chunk_count|add:"-10" }} autre(s) passage(s). Utilisez « Rechercher » pour les retrouver.</p>
+            {% endif %}
+        </div>
+    </section>
     {% endif %}
 </div>
 {% endblock %}

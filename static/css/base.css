@@ -1,0 +1,100 @@
+/* =====================================================================
+   base.css - reset léger, typographie, liens, focus, utilitaires
+   ===================================================================== */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: var(--leading-normal);
+    color: var(--color-text);
+    background: var(--color-bg);
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+    margin: 0 0 var(--space-3);
+    line-height: var(--leading-tight);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
+}
+h1 { font-size: var(--text-2xl); font-weight: var(--weight-bold); }
+h2 { font-size: var(--text-lg); }
+h3 { font-size: var(--text-base); }
+
+p { margin: 0 0 var(--space-3); }
+p:last-child { margin-bottom: 0; }
+
+ul, ol { margin: 0 0 var(--space-3); padding-left: var(--space-6); }
+
+img, svg { max-width: 100%; }
+
+a {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+}
+a:hover { color: var(--color-accent-hover); }
+
+button, input, select, textarea { font: inherit; color: inherit; }
+
+/* L'attribut hidden gagne toujours, même sur un composant qui fixe display */
+[hidden] { display: none !important; }
+
+/* Focus visible au clavier sur tous les éléments interactifs */
+:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+}
+:focus:not(:focus-visible) { outline: none; }
+
+/* --- Icônes SVG --- */
+.icon-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+.icon {
+    width: var(--icon-size);
+    height: var(--icon-size);
+    flex-shrink: 0;
+    vertical-align: middle;
+}
+
+/* --- Utilitaires --- */
+/* Masqué visuellement mais lu par les lecteurs d'écran */
+.sr-only {
+    position: absolute !important;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Empilement vertical régulier */
+.stack { display: flex; flex-direction: column; gap: var(--space-4); }
+.stack-lg { display: flex; flex-direction: column; gap: var(--space-6); }
+
+/* Ligne d'éléments qui passe à la ligne si nécessaire */
+.cluster { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+
+.text-muted { color: var(--color-text-muted); }
+.text-small { font-size: var(--text-sm); }
+.text-center { text-align: center; }
+.mt-2 { margin-top: var(--space-2); }
+.mt-4 { margin-top: var(--space-4); }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

@@ -6,6 +6,8 @@ from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
+from core.pagination import paginate
+from core.services.dashboard import completed_attempts
 from llm import LLMError
 
 from .forms import QuizCreateForm
@@ -28,7 +30,14 @@ def quiz_list(request):
         .select_related("document")
         .annotate(question_count=Count("questions"))
     )
-    return render(request, "quizzes/quiz_list.html", {"quizzes": quizzes})
+    return render(request, "quizzes/quiz_list.html", {"quizzes": paginate(request, quizzes)})
+
+
+@login_required
+def attempt_history(request):
+    """Historique de toutes les tentatives terminées, avec leurs notes."""
+    attempts = paginate(request, completed_attempts(request.user), per_page=20)
+    return render(request, "quizzes/attempt_history.html", {"attempts": attempts})
 
 
 @login_required

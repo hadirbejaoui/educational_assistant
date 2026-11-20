@@ -6,6 +6,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
+from core.pagination import paginate
 from courses.models import CourseDocument
 
 from .models import Summary
@@ -21,8 +22,9 @@ def _user_documents(user):
 
 @login_required
 def summary_list(request):
-    summaries = Summary.objects.filter(document__owner=request.user).select_related(
-        "document"
+    summaries = paginate(
+        request,
+        Summary.objects.filter(document__owner=request.user).select_related("document"),
     )
     return render(request, "summaries/summary_list.html", {"summaries": summaries})
 

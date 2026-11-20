@@ -1,6 +1,7 @@
 import os
 
 from django import forms
+from django.conf import settings
 
 from accounts.forms import StyledFormMixin
 
@@ -23,6 +24,14 @@ class DocumentUploadForm(StyledFormMixin, forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["title"].required = False  # sinon, on prend le nom du fichier
+        # Limites lues par upload.js (validation côté navigateur, pour le confort).
+        # Elles viennent des mêmes settings que le validateur serveur, qui reste la référence.
+        self.fields["file"].widget.attrs.update({
+            "accept": ",".join(settings.ALLOWED_UPLOAD_EXTENSIONS),
+            "data-max-bytes": settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024,
+            "data-max-mb": settings.MAX_UPLOAD_SIZE_MB,
+            "data-extensions": ",".join(settings.ALLOWED_UPLOAD_EXTENSIONS),
+        })
 
     def save(self, commit=True):
         document = super().save(commit=False)

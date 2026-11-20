@@ -1,18 +1,27 @@
 {% extends "base.html" %}
+{% load ui %}
 {% block title %}Nouveau quiz{% endblock %}
 
 {% block content %}
-<div class="card narrow">
-    <h1>Générer un quiz</h1>
+{% url 'quizzes:list' as list_url %}
+{% page_header title="Générer un quiz" subtitle="Questions à choix multiples tirées de votre cours." back_url=list_url back_label="Mes quiz" %}{% endpage_header %}
+
+<div class="card card-narrow">
     {% if not form.fields.document.queryset %}
-        <p>Aucun cours prêt. <a href="{% url 'courses:upload' %}">Importez un cours</a> d'abord.</p>
+        {% url 'courses:upload' as upload_url %}
+        {% include "includes/empty_state.html" with icon="book" title="Aucun cours prêt" text="Importez un cours avant de générer un quiz." action_url=upload_url action_label="Importer un cours" action_icon="upload" %}
     {% else %}
-    <p class="meta">La génération peut prendre une dizaine de secondes.</p>
-    <form method="post" data-loading="Génération en cours…">
-        {% csrf_token %}
-        {% include "includes/form_fields.html" %}
-        <button type="submit" class="btn">Générer</button>
-    </form>
+    <div class="card__body">
+        <div class="alert alert-info" role="note">{% include "includes/icon.html" with name="clock" %}<p class="alert__text">Avec un modèle local, comptez environ une minute par lot de questions. Gardez la page ouverte.</p></div>
+        <form method="post" data-loading="Génération du quiz en cours…" novalidate class="mt-4">
+            {% csrf_token %}
+            {% include "includes/form_fields.html" %}
+            <div class="form-actions">
+                <button type="submit" class="btn">Générer le quiz</button>
+                <a class="btn btn-ghost" href="{{ list_url }}">Annuler</a>
+            </div>
+        </form>
+    </div>
     {% endif %}
 </div>
 {% endblock %}

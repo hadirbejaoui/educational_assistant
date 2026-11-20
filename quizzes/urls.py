@@ -10,5 +10,6 @@ urlpatterns = [
     path("<int:pk>/", views.quiz_detail, name="detail"),
     path("<int:pk>/take/", views.quiz_take, name="take"),
     path("<int:pk>/delete/", views.quiz_delete, name="delete"),
+    path("attempts/", views.attempt_history, name="history"),
     path("attempts/<int:pk>/", views.attempt_result, name="result"),
 ]

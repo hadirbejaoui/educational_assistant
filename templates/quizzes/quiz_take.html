@@ -1,24 +1,47 @@
 {% extends "base.html" %}
+{% load ui %}
 {% block title %}{{ quiz.title }}{% endblock %}
 
 {% block content %}
-<div class="card"><h1>{{ quiz.title }}</h1>
-<p class="meta">Une seule bonne réponse par question. Une question sans réponse compte comme fausse.</p></div>
+{% url 'quizzes:detail' quiz.pk as detail_url %}
+{% page_header title=quiz.title subtitle="Une seule bonne réponse par question. Une question sans réponse compte comme fausse." back_url=detail_url back_label="Retour au quiz" %}{% endpage_header %}
 
-<form method="post">
+<form method="post" id="quiz-form" data-quiz-form class="stack">
     {% csrf_token %}
+    {# Progression : affichée et tenue à jour par quiz.js #}
+    <div class="card quiz-progress" data-quiz-progress hidden>
+        <div class="quiz-progress__labels">
+            <strong data-quiz-position aria-live="polite"></strong>
+            <span data-quiz-answered></span>
+        </div>
+        <progress class="progress" data-quiz-bar value="0" max="{{ questions|length }}"></progress>
+        <div class="quiz-dots" data-quiz-dots role="group" aria-label="Aller à une question"></div>
+    </div>
+
     {% for question in questions %}
-    <div class="card question">
-        <h3>{{ forloop.counter }}. {{ question.text }}</h3>
+    <fieldset class="card question" data-question tabindex="-1" aria-labelledby="q{{ question.id }}-title">
+        <span class="question__number">Question {{ forloop.counter }} sur {{ questions|length }}</span>
+        <h2 id="q{{ question.id }}-title" class="question__text">{{ question.text }}</h2>
         {% for choice in question.choices.all %}
         <label class="choice">
             <input type="radio" name="question_{{ question.id }}" value="{{ choice.id }}">
-            {{ choice.text }}
+            <span class="choice__text">{{ choice.text }}</span>
         </label>
         {% endfor %}
-    </div>
+    </fieldset>
     {% endfor %}
-    <button type="submit" class="btn">Valider mes réponses</button>
-    <a href="{% url 'quizzes:detail' quiz.pk %}">Annuler</a>
+
+    <div class="quiz-nav">
+        <div class="cluster">
+            <button type="button" class="btn btn-secondary" data-quiz-prev hidden>{% include "includes/icon.html" with name="chevron-left" %}Précédente</button>
+            <button type="button" class="btn btn-secondary" data-quiz-next hidden>Suivante{% include "includes/icon.html" with name="chevron-right" %}</button>
+        </div>
+        <div class="cluster">
+            <a class="btn btn-ghost" href="{{ detail_url }}">Annuler</a>
+            <button type="submit" class="btn">{% include "includes/icon.html" with name="check" %}Valider mes réponses</button>
+        </div>
+    </div>
 </form>
 {% endblock %}
+
+{% block extra_js %}<script src="{% asset 'js/quiz.js' %}"></script>{% endblock %}
