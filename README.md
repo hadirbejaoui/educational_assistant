@@ -8,6 +8,8 @@ Tout fonctionne en local, sans service payant : PostgreSQL + pgvector pour la re
 Sentence Transformers pour les embeddings, Ollama (Qwen3) pour le LLM. Le fournisseur de
 LLM reste interchangeable (Ollama, Gemini ou Anthropic, une ligne dans `.env`).
 
+Bilan pour la soutenance (état de chaque fonctionnalité, résultats mesurés, limites) : [`BILAN.md`](BILAN.md).
+
 ---
 
 ## 1. Fonctionnalités

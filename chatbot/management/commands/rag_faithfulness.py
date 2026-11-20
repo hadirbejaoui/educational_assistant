@@ -19,6 +19,7 @@ Définitions pour la relecture :
 """
 
 import csv
+import io
 import random
 import time
 from types import SimpleNamespace
@@ -110,13 +111,31 @@ class Command(BaseCommand):
         self.stdout.write("Remplissez la colonne « appuyee » (oui / partiel / non), puis : "
                           f"python manage.py rag_faithfulness --score {options['out']}")
 
+    @staticmethod
+    def _read_sheet(path):
+        """Lit la grille quel que soit le format choisi dans Excel à l'enregistrement :
+        « CSV UTF-8 » (UTF-8, ;) ou « CSV (séparateur : point-virgule) » (Windows-1252, ;),
+        ou un CSV séparé par des virgules."""
+        with open(path, "rb") as handle:
+            raw = handle.read()
+        for encoding in ("utf-8-sig", "cp1252"):
+            try:
+                text = raw.decode(encoding)
+                break
+            except UnicodeDecodeError:
+                continue
+        first_line = text.split("\n", 1)[0]
+        delimiter = ";" if first_line.count(";") >= first_line.count(",") else ","
+        return list(csv.DictReader(io.StringIO(text, newline=""), delimiter=delimiter))
+
     def _score(self, path):
         try:
-            with open(path, encoding="utf-8-sig", newline="") as handle:
-                rows = list(csv.DictReader(handle, delimiter=";"))
+            rows = self._read_sheet(path)
         except OSError as exc:
             raise CommandError(str(exc))
-        verdicts = [r.get("appuyee", "").strip().lower() for r in rows]
+        if rows and "appuyee" not in rows[0]:
+            raise CommandError("Colonne « appuyee » introuvable : le fichier a-t-il été enregistré au format CSV ?")
+        verdicts = [(r.get("appuyee") or "").strip().lower() for r in rows]
         unknown = [v for v in verdicts if v and v not in VERDICTS]
         if unknown:
             raise CommandError(f"Valeurs inconnues dans « appuyee » : {sorted(set(unknown))} (attendu : {', '.join(VERDICTS)})")

@@ -90,6 +90,16 @@ class EvaluationCommandTests(TestCase):
         self.assertIn("2 réponses relues", score)
         self.assertIn("50.0%", score)
 
+    def test_faithfulness_score_reads_excel_windows_csv(self):
+        # Excel « CSV (séparateur : point-virgule) » : encodage Windows-1252, accents compris
+        sheet = Path(TEMP_DIR) / "excel.csv"
+        sheet.write_bytes("id;question;appuyee\n1;Société ?;oui\n2;Été ?;partiel\n".encode("cp1252"))
+        output = run("rag_faithfulness", score=str(sheet))
+        self.assertIn("2 réponses relues", output)
+        comma = Path(TEMP_DIR) / "virgules.csv"
+        comma.write_text("id,question,appuyee\n1,Q,non\n", encoding="utf-8")
+        self.assertIn("1 réponses relues", run("rag_faithfulness", score=str(comma)))
+
     def test_faithfulness_score_refuses_unknown_values(self):
         sheet = Path(TEMP_DIR) / "mauvais.csv"
         sheet.write_text("id;appuyee\n1;peut-être\n", encoding="utf-8-sig")
