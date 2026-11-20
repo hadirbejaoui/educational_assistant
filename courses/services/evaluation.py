@@ -199,3 +199,84 @@ def refusal_stats(documents, embedder, threshold):
         "answered_rate": sum(s >= threshold for s in answerable) / max(len(answerable), 1),
         "refused_rate": sum(s < threshold for s in unanswerable) / max(len(unanswerable), 1),
     }
+
+
+# --- Évaluation sur les cours réels (fichier evaluation/rag_questions.json) ----------
+
+def load_course_questions(path):
+    """Lit et vérifie le fichier d'évaluation ; retourne la liste des cours."""
+    import json
+
+    with open(path, encoding="utf-8") as handle:
+        data = json.load(handle)
+    courses = data.get("courses") if isinstance(data, dict) else None
+    if not isinstance(courses, list) or not courses:
+        raise ValueError("Le fichier doit contenir une liste « courses » non vide.")
+    for course in courses:
+        if not isinstance(course.get("document_id"), int):
+            raise ValueError("Chaque cours doit avoir un « document_id » entier.")
+        for item in course.get("questions", []):
+            if not item.get("question") or not (item.get("expected_pages") or item.get("expected_text")):
+                raise ValueError(
+                    f"Question incomplète dans le cours {course['document_id']} : "
+                    "il faut « question » et « expected_pages » ou « expected_text »."
+                )
+        course.setdefault("questions", [])
+        course.setdefault("out_of_scope", [])
+    return courses
+
+
+def chunk_is_relevant(chunk, item):
+    """Le passage couvre une page attendue (et contient l'extrait attendu, s'il est donné)."""
+    pages = item.get("expected_pages") or []
+    if pages and not any(chunk.page_start <= page <= chunk.page_end for page in pages):
+        return False
+    text = item.get("expected_text")
+    return not text or _plain(text) in _plain(chunk.text)
+
+
+def rank_stored_document(document, query, embedder, weights, depth=None):
+    """Classements d'un document indexé, pour plusieurs poids lexicaux, en un seul calcul.
+
+    Mêmes étapes que search_chunks() : vecteurs pgvector (CosineDistance), BM25 sur
+    les mêmes passages, fusion par hybrid_order(). Retourne un dictionnaire :
+    chunks {id: chunk}, cosine {id: similarité}, lexical_rank {id: rang},
+    orders {poids: [ids du meilleur au moins bon]}.
+    """
+    from pgvector.django import CosineDistance
+
+    depth = depth or getattr(settings, "RETRIEVAL_CANDIDATES", 50)
+    vector = embedder.embed_query(query)
+    dense = list(
+        document.chunks.filter(embedding__isnull=False, embedding_model=embedder.model_name)
+        .annotate(distance=CosineDistance("embedding", vector))
+        .order_by("distance", "chunk_index")
+        .defer("embedding")
+    )
+    cosine = {chunk.id: 1 - chunk.distance for chunk in dense}
+    dense_ids = [chunk.id for chunk in dense]
+    lexical_ids = [chunk.id for chunk in lexical_rank(dense, query, limit=depth)]
+    orders = {}
+    for weight in weights:
+        orders[weight] = hybrid_order(dense_ids, lexical_ids if weight > 0 else [], cosine, weight, depth)[0]
+    return {
+        "chunks": {chunk.id: chunk for chunk in dense},
+        "cosine": cosine,
+        "lexical_rank": {chunk_id: rank for rank, chunk_id in enumerate(lexical_ids, start=1)},
+        "orders": orders,
+    }
+
+
+def wilson_interval(successes, total, z=1.96):
+    """Intervalle de confiance à 95 % d'une proportion (méthode de Wilson).
+
+    Plus fiable que « p ± 1,96·√(p(1-p)/n) » pour les petits échantillons :
+    avec 3 succès sur 10, il donne [0,11 ; 0,60], ce qui montre à quel point
+    une mesure sur 10 questions est imprécise.
+    """
+    if not total:
+        return 0.0, 1.0
+    p = successes / total
+    centre = (p + z * z / (2 * total)) / (1 + z * z / total)
+    margin = z * math.sqrt(p * (1 - p) / total + z * z / (4 * total * total)) / (1 + z * z / total)
+    return max(0.0, centre - margin), min(1.0, centre + margin)

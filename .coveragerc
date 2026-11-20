@@ -1,0 +1,15 @@
+# Configuration de coverage.py : python -m coverage run manage.py test ; python -m coverage report
+[run]
+source = accounts, core, courses, summaries, quizzes, chatbot, llm, config
+omit =
+    */migrations/*
+    */tests.py
+    */test_*.py
+    config/asgi.py
+    config/wsgi.py
+    manage.py
+
+[report]
+show_missing = True
+skip_covered = False
+precision = 0

@@ -1,0 +1,61 @@
+{
+    "_mode_d_emploi": [
+        "Fichier d'évaluation du RAG sur vos cours réels. Modifiez-le librement.",
+        "document_id : identifiant du cours (visible dans l'URL /courses/<id>/).",
+        "questions : questions dont la réponse est dans le cours.",
+        "  expected_pages : page(s) où se trouve la réponse ; un passage est pertinent s'il couvre l'une d'elles.",
+        "  expected_text (facultatif) : extrait exact de la réponse ; s'il est donné, le passage doit aussi le contenir.",
+        "out_of_scope : questions SANS réponse dans le cours (le chatbot doit refuser).",
+        "Objectif : 20 à 30 questions et au moins 10 questions hors cours par cours.",
+        "Commandes : python manage.py rag_eval_courses   puis   python manage.py rag_faithfulness"
+    ],
+    "courses": [
+        {
+            "document_id": 8,
+            "title": "Résumé Droit des sociétés",
+            "questions": [
+                {"question": "Quelle est la responsabilité des associés dans une SNC ?", "expected_pages": [3]},
+                {"question": "Combien d'associés faut-il au minimum dans une SNC ?", "expected_pages": [3]},
+                {"question": "Que se passe-t-il au décès d'un associé de SNC si les statuts interdisent la continuation ?", "expected_pages": [4]},
+                {"question": "Combien d'associés compte au minimum une SCS ?", "expected_pages": [4]},
+                {"question": "Quel est le nombre maximum d'associés dans une SARL ?", "expected_pages": [5]},
+                {"question": "La responsabilité des associés d'une SARL est-elle limitée ?", "expected_pages": [5]},
+                {"question": "Une personne morale peut-elle être associée unique d'une SUARL ?", "expected_pages": [6]},
+                {"question": "Combien d'actionnaires faut-il au minimum pour une SA ?", "expected_pages": [7]},
+                {"question": "Quel est le capital minimum d'une SA avec appel public à l'épargne ?", "expected_pages": [7]},
+                {"question": "Quelle est la différence entre une action et une obligation ?", "expected_pages": [8]},
+                {"question": "Le patrimoine personnel de l'entrepreneur individuel est-il séparé de son patrimoine professionnel ?", "expected_pages": [9]},
+                {"question": "Quel est le plafond annuel de chiffre d'affaires de l'auto-entrepreneur ?", "expected_pages": [12]},
+                {"question": "Quelle amende s'applique en cas de retard de déclaration pour un auto-entrepreneur ?", "expected_pages": [12]},
+                {"question": "Quel texte a créé le régime de l'auto-entrepreneur ?", "expected_pages": [11]},
+                {"question": "Quelle est la différence entre une entreprise et une société ?", "expected_pages": [2]}
+            ],
+            "out_of_scope": [
+                "Quelle est la durée maximale de la garde à vue en Tunisie ?",
+                "Comment calculer la TVA sur une facture ?",
+                "Qui a écrit Les Misérables ?",
+                "Quelle est la formule de la variance d'une variable aléatoire ?",
+                "Comment créer une API REST avec Django ?"
+            ]
+        },
+        {
+            "document_id": 5,
+            "title": "Méthodologies - Gestion de stock",
+            "questions": [
+                {"question": "Quelle est la durée d'un sprint dans ce projet ?", "expected_pages": [8, 11, 21]},
+                {"question": "Quelles sont les quatre phases de RUP ?", "expected_pages": [12]},
+                {"question": "Qu'est-ce que la méthodologie AUP ?", "expected_pages": [17]},
+                {"question": "Quelle méthodologie est recommandée pour le système de gestion de stock ?", "expected_pages": [22]},
+                {"question": "Quels sont les trois cas d'utilisation étudiés ?", "expected_pages": [6]},
+                {"question": "Qui joue le rôle de Product Owner ?", "expected_pages": [8]},
+                {"question": "Comment l'alternative A1 « champ obligatoire incomplet » est-elle traitée en RUP ?", "expected_pages": [15]},
+                {"question": "Combien d'itérations compte le plan AUP ?", "expected_pages": [20]}
+            ],
+            "out_of_scope": [
+                "Quel est le capital minimum d'une SARL ?",
+                "Comment fonctionne la régression logistique ?",
+                "Quelle est la capitale de l'Australie ?"
+            ]
+        }
+    ]
+}

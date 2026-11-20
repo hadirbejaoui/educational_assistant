@@ -6,6 +6,7 @@ from django.conf import settings
 from django.db import transaction
 
 from llm import LLMError, get_llm_client
+from llm.safety import neutralize_course_text
 
 from ..models import Choice, Question, Quiz
 from .errors import QuizError, QuizFormatError
@@ -16,6 +17,7 @@ logger = logging.getLogger(__name__)
 BATCH_SIZE = 5
 MAX_CONTEXT_CHARS = 9000
 ATTEMPTS_PER_BATCH = 2
+COMPLEMENT_ROUNDS = 2  # tentatives supplémentaires si des questions manquent
 
 DIFFICULTY_HINTS = {
     "easy": "questions faciles : définitions et faits directement énoncés dans le texte",
@@ -55,7 +57,7 @@ def _context_for_batch(chunks, index, total_batches):
 
     parts, used = [], 0
     for chunk in segment:
-        piece = f"[Pages {chunk.page_start}-{chunk.page_end}]\n{chunk.text}"
+        piece = f"[Pages {chunk.page_start}-{chunk.page_end}]\n{neutralize_course_text(chunk.text)}"
         if parts and used + len(piece) > MAX_CONTEXT_CHARS:
             break
         parts.append(piece)
@@ -77,8 +79,28 @@ def _build_prompt(count, difficulty, context, already_asked):
     )
 
 
+def _ask(client, prompt, difficulty, wanted, collected, seen, document):
+    """Un appel au modèle ; ajoute les nouvelles questions valides. Retourne True si au moins une."""
+    raw = client.generate(prompt, system=SYSTEM_PROMPT, json_mode=True)
+    try:
+        questions = validate_questions(extract_json(raw), difficulty)
+    except QuizFormatError:
+        logger.warning("Réponse LLM invalide pour le document %s", document.pk)
+        return False
+    fresh = [q for q in questions if q.text.lower() not in seen][:wanted]
+    for question in fresh:
+        seen.add(question.text.lower())
+    collected.extend(fresh)
+    return bool(fresh)
+
+
 def generate_quiz(document, count, difficulty, client=None, title=""):
-    """Génère un quiz pour un document et l'enregistre."""
+    """Génère un quiz pour un document et l'enregistre.
+
+    Si le modèle produit moins de questions que demandé, des appels de complément
+    sont faits. Le quiz peut malgré tout être plus court : la vue compare alors
+    `quiz.questions.count()` au nombre demandé et prévient l'étudiant.
+    """
     if difficulty not in Quiz.Difficulty.values:
         raise QuizError("Niveau de difficulté inconnu.")
     if not 1 <= count <= settings.QUIZ_MAX_QUESTIONS:
@@ -102,18 +124,20 @@ def generate_quiz(document, count, difficulty, client=None, title=""):
         prompt = _build_prompt(wanted, difficulty, context, [q.text for q in collected])
 
         for _ in range(ATTEMPTS_PER_BATCH):
-            raw = client.generate(prompt, system=SYSTEM_PROMPT, json_mode=True)
-            try:
-                questions = validate_questions(extract_json(raw), difficulty)
-            except QuizFormatError:
-                logger.warning("Réponse LLM invalide pour le document %s", document.pk)
-                continue
-            fresh = [q for q in questions if q.text.lower() not in seen][:wanted]
-            if fresh:
-                for question in fresh:
-                    seen.add(question.text.lower())
-                collected.extend(fresh)
+            if _ask(client, prompt, difficulty, wanted, collected, seen, document):
                 break
+
+    # Complément : si des lots ont échoué ou rendu trop peu de questions, on redemande
+    # les questions manquantes en parcourant d'autres zones du document.
+    for round_index in range(COMPLEMENT_ROUNDS):
+        missing = count - len(collected)
+        if missing <= 0 or not collected:  # rien d'exploitable : inutile d'insister
+            break
+        logger.info("Quiz incomplet (%s/%s) : complément n°%s", len(collected), count, round_index + 1)
+        zone = (round_index + len(collected)) % max(total_batches, 2)
+        context = _context_for_batch(chunks, zone, max(total_batches, 2))
+        prompt = _build_prompt(missing, difficulty, context, [q.text for q in collected])
+        _ask(client, prompt, difficulty, missing, collected, seen, document)
 
     if not collected:
         raise QuizError("Le modèle n'a pas produit de questions valides. Réessayez.")

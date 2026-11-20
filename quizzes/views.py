@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from core.pagination import paginate
+from core.ratelimit import rate_limit
 from core.services.dashboard import completed_attempts
 from llm import LLMError
 
@@ -41,6 +42,7 @@ def attempt_history(request):
 
 
 @login_required
+@rate_limit("quiz")
 def quiz_create(request):
     if request.method == "POST":
         form = QuizCreateForm(request.user, request.POST)
@@ -57,7 +59,16 @@ def quiz_create(request):
                 logger.exception("Échec de la génération du quiz")
                 messages.error(request, "Erreur inattendue pendant la génération du quiz.")
             else:
-                messages.success(request, f"Quiz généré : {quiz.questions.count()} question(s).")
+                produced, requested = quiz.questions.count(), form.cleaned_data["count"]
+                if produced < requested:
+                    messages.warning(
+                        request,
+                        f"Le modèle n'a produit que {produced} question(s) valide(s) sur "
+                        f"{requested} demandée(s), malgré une tentative de complément. "
+                        "Vous pouvez passer ce quiz ou en générer un autre.",
+                    )
+                else:
+                    messages.success(request, f"Quiz généré : {produced} question(s).")
                 return redirect("quizzes:detail", pk=quiz.pk)
     else:
         form = QuizCreateForm(request.user, initial={"document": request.GET.get("document")})

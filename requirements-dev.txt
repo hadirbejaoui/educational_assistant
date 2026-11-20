@@ -1,0 +1,3 @@
+# Outils de développement et de test (en plus de requirements.txt)
+-r requirements.txt
+coverage==7.17.4

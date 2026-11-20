@@ -8,6 +8,7 @@ from django.conf import settings
 from courses.services.embeddings import get_embedder
 from courses.services.retrieval import search_chunks
 from llm import get_llm_client
+from llm.safety import neutralize_course_text
 
 from .errors import RagError
 
@@ -112,7 +113,7 @@ def _build_context(hits):
         header = f"[{len(kept) + 1}] ({_page_label(chunk)}"
         if chunk.chapter:
             header += f", {chunk.chapter}"
-        piece = f"{header})\n{chunk.text}"
+        piece = f"{header})\n{neutralize_course_text(chunk.text)}"
         if kept and used + len(piece) > settings.RAG_MAX_CONTEXT_CHARS:
             break
         parts.append(piece)

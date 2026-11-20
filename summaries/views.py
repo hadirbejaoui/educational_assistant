@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from core.pagination import paginate
+from core.ratelimit import rate_limit
 from courses.models import CourseDocument
 
 from .models import Summary
@@ -46,6 +47,7 @@ def document_summaries(request, pk):
 
 @login_required
 @require_POST
+@rate_limit("summary")
 def summary_generate(request, pk, level):
     if level not in Summary.Level.values:
         raise Http404("Niveau inconnu.")

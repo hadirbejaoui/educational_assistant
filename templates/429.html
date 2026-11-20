@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Trop de demandes{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="empty-state">
+        <p class="error-code" aria-hidden="true">429</p>
+        <h1 class="empty-state__title">Trop de demandes</h1>
+        <p class="empty-state__text">{{ message }} Les traitements d'IA sont limités pour que le serveur reste disponible pour tous.</p>
+        <a class="btn" href="{% url 'dashboard' %}">{% include "includes/icon.html" with name="home" %}Retour au tableau de bord</a>
+    </div>
+</div>
+{% endblock %}

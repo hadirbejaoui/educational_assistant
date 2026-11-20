@@ -1,5 +1,3 @@
-from django.conf import settings
-from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
@@ -14,6 +12,5 @@ urlpatterns = [
     path("quizzes/", include("quizzes.urls")),
     path("chatbot/", include("chatbot.urls")),
 ]
-
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Les fichiers importés (MEDIA_ROOT) ne sont JAMAIS servis directement, même en DEBUG :
+# ils passent par la vue courses:file, qui vérifie que l'utilisateur en est le propriétaire.

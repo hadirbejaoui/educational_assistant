@@ -146,6 +146,26 @@ class GenerationTests(TestCase):
         with self.assertRaises(QuizError):
             generate_quiz(empty, 3, "easy", FakeLLM([]))
 
+    def test_missing_questions_are_complemented(self):
+        # Lot 1 : 5 questions ; lot 2 : deux réponses invalides ; complément : les 2 manquantes
+        llm = FakeLLM([questions_json(5, "A"), "x", "y", questions_json(2, "C")])
+        quiz = generate_quiz(self.document, 7, "medium", llm)
+        self.assertEqual(quiz.questions.count(), 7)
+        self.assertIn("exactement 2 questions", llm.prompts[-1])
+        self.assertIn("A0 ?", llm.prompts[-1])  # les questions déjà posées sont à éviter
+
+    def test_quiz_can_stay_shorter_after_complement(self):
+        llm = FakeLLM([questions_json(2, "A"), "x", "y"])
+        quiz = generate_quiz(self.document, 4, "easy", llm)
+        self.assertEqual(quiz.questions.count(), 2)
+        self.assertEqual(len(llm.prompts), 3)  # 1 appel + 2 compléments (vides)
+
+    def test_no_complement_when_nothing_was_produced(self):
+        llm = FakeLLM(["x", "y"])
+        with self.assertRaises(QuizError):
+            generate_quiz(self.document, 3, "easy", llm)
+        self.assertEqual(len(llm.prompts), 2)
+
     def test_invalid_difficulty_and_count(self):
         with self.assertRaises(QuizError):
             generate_quiz(self.document, 3, "impossible", FakeLLM([]))
@@ -246,6 +266,21 @@ class QuizViewTests(TestCase):
                 "document": self.alice_doc.pk, "count": 3, "difficulty": "easy"})
         quiz = Quiz.objects.get()
         self.assertRedirects(response, reverse("quizzes:detail", args=[quiz.pk]))
+
+    def test_student_is_warned_when_quiz_is_shorter(self):
+        llm = FakeLLM([questions_json(2, "A"), "x", "y"])
+        with patch("quizzes.services.generation.get_llm_client", return_value=llm):
+            response = self.client.post(reverse("quizzes:create"), {
+                "document": self.alice_doc.pk, "count": 4, "difficulty": "easy"}, follow=True)
+        self.assertContains(response, "que 2 question(s) valide(s) sur 4")
+        self.assertContains(response, "alert-warning")
+
+    def test_complete_quiz_shows_success(self):
+        llm = FakeLLM([questions_json(3)])
+        with patch("quizzes.services.generation.get_llm_client", return_value=llm):
+            response = self.client.post(reverse("quizzes:create"), {
+                "document": self.alice_doc.pk, "count": 3, "difficulty": "easy"}, follow=True)
+        self.assertContains(response, "Quiz généré : 3 question(s).")
 
     def test_cannot_create_quiz_on_other_users_document(self):
         response = self.client.post(reverse("quizzes:create"), {

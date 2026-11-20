@@ -63,6 +63,7 @@
                         {% csrf_token %}
                         <button type="submit" class="btn btn-secondary">Retraiter</button>
                     </form>
+                    <a class="btn btn-secondary" href="{% url 'courses:file' document.pk %}">Fichier original</a>
                     <a class="btn btn-danger" href="{% url 'courses:delete' document.pk %}">Supprimer</a>
                 </div>
             </div>

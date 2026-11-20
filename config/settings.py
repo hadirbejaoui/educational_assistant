@@ -34,6 +34,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "core.middleware.SecurityHeadersMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -144,3 +145,19 @@ LOGGING = {
         "llm": {"handlers": ["console"], "level": "INFO"},
     },
 }
+
+# Sécurité et limites (phase 10)
+# Traitements d'IA coûteux : (nombre de requêtes, fenêtre en secondes) par utilisateur ; 0 = pas de limite
+RATE_LIMITS = {
+    "chat": (int(os.getenv("RATE_LIMIT_CHAT", "6")), 60),
+    "quiz": (int(os.getenv("RATE_LIMIT_QUIZ", "10")), 3600),
+    "summary": (int(os.getenv("RATE_LIMIT_SUMMARY", "10")), 3600),
+}
+# Taille maximale d'une requête hors fichiers (formulaires) ; les fichiers sont limités
+# par MAX_UPLOAD_SIZE_MB dans courses/validators.py
+DATA_UPLOAD_MAX_MEMORY_SIZE = 2 * 1024 * 1024
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = False  # le JavaScript du chat lit le jeton CSRF dans le formulaire, pas dans le cookie
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = "DENY"
+

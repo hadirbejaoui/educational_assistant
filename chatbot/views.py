@@ -11,6 +11,7 @@ from django.views.decorators.http import require_POST
 
 from courses.services.embeddings import EmbeddingError, get_embedder, index_document
 from core.pagination import paginate
+from core.ratelimit import rate_limit
 from llm import LLMError
 
 from .forms import NewConversationForm
@@ -79,6 +80,7 @@ def conversation_detail(request, pk):
 
 @login_required
 @require_POST
+@rate_limit("chat", json_response=True)
 def conversation_send(request, pk):
     conversation = get_object_or_404(
         _user_conversations(request.user).select_related("document"), pk=pk

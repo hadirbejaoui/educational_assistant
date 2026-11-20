@@ -1,4 +1,7 @@
+import mimetypes
+
 from django.contrib import messages
+from django.http import FileResponse, Http404
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
@@ -125,3 +128,19 @@ def document_search(request, pk):
         "courses/document_search.html",
         {"document": document, "query": query, "hits": hits},
     )
+
+@login_required
+def document_file(request, pk):
+    """Sert le fichier original, uniquement à son propriétaire (404 pour les autres)."""
+    document = get_object_or_404(_user_documents(request.user), pk=pk)
+    try:
+        handle = document.file.open("rb")
+    except (FileNotFoundError, ValueError):
+        raise Http404("Fichier introuvable.")
+    extension = "." + document.file_type
+    content_type = mimetypes.types_map.get(extension, "application/octet-stream")
+    if document.file_type == "txt":
+        content_type = "text/plain; charset=utf-8"
+    response = FileResponse(handle, content_type=content_type, filename=f"{document.title}{extension}")
+    response["Cache-Control"] = "private, no-store"  # jamais conservé par un cache partagé
+    return response
