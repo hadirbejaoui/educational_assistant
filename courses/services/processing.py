@@ -6,7 +6,7 @@ from django.db import transaction
 
 from ..models import CourseDocument, DocumentChunk, DocumentPage
 from .chunking import chunk_pages
-from .cleaning import clean_text
+from .cleaning import clean_text, strip_repeated_lines
 from .data import ExtractionError
 from .extraction import extract_pages
 
@@ -32,7 +32,12 @@ def process_document(document):
 
     try:
         raw_pages = extract_pages(document.file.path, document.file_type)
-        pages = [dataclasses.replace(p, text=clean_text(p.text)) for p in raw_pages]
+        # En-têtes / pieds de page répétés : repérés sur l'ensemble du document
+        raw_texts = strip_repeated_lines([p.text for p in raw_pages])
+        pages = [
+            dataclasses.replace(p, text=clean_text(text))
+            for p, text in zip(raw_pages, raw_texts)
+        ]
 
         if not any(p.text for p in pages):
             raise ExtractionError(

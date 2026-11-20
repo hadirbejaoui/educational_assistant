@@ -1,4 +1,3 @@
-
 import logging
 from abc import ABC, abstractmethod
 
@@ -28,62 +27,44 @@ class BaseLLMClient(ABC):
 
         try:
             response = requests.post(
-                url,
-                headers=headers,
-                json=payload,
-                timeout=self.timeout
+                url, headers=headers, json=payload, timeout=self.timeout
             )
-
         except requests.ConnectionError as exc:
             raise LLMError(
-                "Impossible de joindre le LLM. Si vous utilisez Ollama, "
-                "vérifiez qu'il est lancé (icône dans la barre des tâches)."
+                "Impossible de joindre le LLM. Si vous utilisez Ollama, vérifiez "
+                "qu'il est lancé (icône dans la barre des tâches)."
             ) from exc
-
-        except requests.Timeout as exc:
+        except requests.RequestException as exc:
             raise LLMError(
                 "Le LLM n'a pas répondu à temps. Un modèle local peut être lent : "
                 "augmentez LLM_TIMEOUT dans .env."
             ) from exc
 
-        except requests.RequestException as exc:
-            raise LLMError(
-                "Une erreur réseau est survenue lors de la communication avec le LLM."
-            ) from exc
-
-        # Vérifier si le modèle demandé existe
+        if response.status_code in (401, 403):
+            detail = ""
+            try:
+                detail = response.json()["error"]["message"]
+            except (ValueError, KeyError, TypeError):
+                pass
+            if "billing" in detail.lower() or "free tier" in detail.lower():
+                raise LLMError(
+                    "Accès refusé : le niveau gratuit n'est pas disponible pour ce "
+                    "projet. Activez la facturation chez le fournisseur ou changez de projet."
+                )
+            raise LLMError("Clé API refusée par le fournisseur LLM.")
+        if response.status_code == 429:
+            raise LLMError("Quota ou limite de requêtes atteint. Réessayez plus tard.")
         if response.status_code == 404:
             raise LLMError(
-                "Modèle introuvable. Vérifiez LLM_MODEL "
-                "(pour Ollama : `ollama list`)."
+                "Modèle introuvable. Vérifiez LLM_MODEL (pour Ollama : `ollama list`)."
             )
-
-        if response.status_code in (401, 403):
-            raise LLMError(
-                "Clé API refusée par le fournisseur LLM."
-            )
-
-        if response.status_code == 429:
-            raise LLMError(
-                "Quota ou limite de requêtes atteint. Réessayez plus tard."
-            )
-
         if response.status_code >= 400:
-            logger.warning(
-                "Erreur LLM %s : %s",
-                response.status_code,
-                response.text[:300]
-            )
+            logger.warning("Erreur LLM %s : %s", response.status_code, response.text[:300])
             raise LLMError(
-                f"Le fournisseur LLM a répondu par une erreur "
-                f"({response.status_code}). Vérifiez le nom du modèle "
-                "dans LLM_MODEL."
+                f"Le fournisseur LLM a répondu par une erreur ({response.status_code}). "
+                "Vérifiez le nom du modèle dans LLM_MODEL."
             )
-
         try:
             return response.json()
-
         except ValueError as exc:
-            raise LLMError(
-                "Réponse illisible du fournisseur LLM."
-            ) from exc
+            raise LLMError("Réponse illisible du fournisseur LLM.") from exc

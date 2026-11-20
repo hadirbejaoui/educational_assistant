@@ -8,6 +8,8 @@ from django.urls import reverse
 
 from accounts.models import User
 from courses.services.embeddings import index_document
+from courses.services import eval_corpus
+from courses.services.evaluation import build_chunks
 from courses.test_embeddings import FakeEmbedder, make_document
 from llm import LLMError
 from llm.base import BaseLLMClient
@@ -16,15 +18,17 @@ from .models import ChatMessage, Conversation
 from .services.rag import (
     NOT_FOUND_TOKEN,
     REFUSAL_MESSAGE,
+    SYSTEM_PROMPT,
     _clean_citations,
     _retrieval_query,
+    _select_hits,
     answer_question,
 )
 
 PASSWORD = "Str0ng-Pass!2026"
 TEMP_MEDIA = tempfile.mkdtemp()
 # Le faux embedder donne des scores bien plus bas que e5 : seuil adapté
-TEST_SETTINGS = dict(MEDIA_ROOT=TEMP_MEDIA, RAG_MIN_SCORE=0.3)
+TEST_SETTINGS = dict(MEDIA_ROOT=TEMP_MEDIA, RAG_MIN_SCORE=0.3, RAG_SCORE_WINDOW=0.08)
 
 
 class FakeLLM(BaseLLMClient):
@@ -63,6 +67,36 @@ class HelperTests(SimpleTestCase):
         self.assertNotIn("[9]", text)
         self.assertIn("[1]", text)
         self.assertEqual(cited, {1, 3})
+
+
+@override_settings(RAG_MIN_SCORE=0.83, RAG_SCORE_WINDOW=0.04)
+class SelectionTests(SimpleTestCase):
+    def _hits(self, *scores):
+        return [SimpleNamespace(score=s) for s in scores]
+
+    def test_questions_measured_as_relevant_are_answered(self):
+        for top in (0.866, 0.851, 0.848):
+            self.assertTrue(_select_hits(self._hits(top)))
+
+    def test_questions_measured_as_out_of_scope_are_refused(self):
+        for top in (0.825, 0.803, 0.758):
+            self.assertEqual(_select_hits(self._hits(top, top - 0.01)), [])
+
+    def test_weak_tail_is_dropped(self):
+        kept = _select_hits(self._hits(0.866, 0.841, 0.828, 0.825, 0.816))
+        self.assertEqual([hit.score for hit in kept], [0.866, 0.841, 0.828])
+
+    def test_empty_list(self):
+        self.assertEqual(_select_hits([]), [])
+
+    @override_settings(RAG_SCORE_WINDOW=0.08)
+    def test_promoted_passage_below_the_best_score_is_kept(self):
+        # 0,819 est à 0,047 du meilleur : gardé avec une fenêtre de 0,08
+        kept = _select_hits(self._hits(0.841, 0.866, 0.819, 0.700))
+        self.assertEqual(sorted(hit.score for hit in kept), [0.819, 0.841, 0.866])
+
+    def test_refusal_uses_the_best_score_not_the_first_one(self):
+        self.assertEqual(_select_hits(self._hits(0.70, 0.80)), [])
 
 
 @override_settings(**TEST_SETTINGS)
@@ -229,3 +263,72 @@ class ChatViewTests(TestCase):
         self.document.delete()
         self.assertFalse(Conversation.objects.filter(title="Conv Alice").exists())
         self.assertEqual(ChatMessage.objects.count(), 0)
+
+@override_settings(RAG_MIN_SCORE=0.83, RAG_SCORE_WINDOW=0.04)
+class HybridSelectionTests(SimpleTestCase):
+    def test_best_keyword_passage_is_kept_below_the_window(self):
+        hits = [
+            SimpleNamespace(score=0.88, lexical_rank=None),
+            SimpleNamespace(score=0.80, lexical_rank=1),  # terme exact de la question
+            SimpleNamespace(score=0.80, lexical_rank=2),
+        ]
+        self.assertEqual(_select_hits(hits), hits[:2])
+
+    def test_keyword_match_alone_does_not_bypass_the_threshold(self):
+        hits = [SimpleNamespace(score=0.70, lexical_rank=1)]
+        self.assertEqual(_select_hits(hits), [])
+
+
+class PromptTests(SimpleTestCase):
+    def test_prompt_handles_language_partial_answers_and_refusal(self):
+        self.assertIn("langue de la question", SYSTEM_PROMPT)
+        self.assertIn("une partie de la question", SYSTEM_PROMPT)
+        self.assertIn(NOT_FOUND_TOKEN, SYSTEM_PROMPT)
+
+
+# Chunks réels (~600 caractères) : le faux embedder « sac de mots » donne des
+# cosinus bas, d'où un seuil plus bas que pour les phrases courtes des autres tests.
+@override_settings(**{**TEST_SETTINGS, "RAG_MIN_SCORE": 0.05, "RAG_SCORE_WINDOW": 0.2})
+class MultiSubjectRagTests(TestCase):
+    """Le même pipeline répond sur des cours de matières et de langues différentes."""
+
+    def setUp(self):
+        self.owner = User.objects.create_user("carol", "carol@example.com", PASSWORD)
+        self.embedder = FakeEmbedder()
+        self.conversations = {}
+        for spec in eval_corpus.DOCUMENTS:
+            chunks = build_chunks(eval_corpus.raw_pages(spec))
+            document = make_document(self.owner, spec["title"], texts=[c.text for c in chunks])
+            for stored, chunk in zip(document.chunks.order_by("chunk_index"), chunks):
+                stored.page_start, stored.page_end = chunk.page_start, chunk.page_end
+                stored.save(update_fields=["page_start", "page_end"])
+            index_document(document, self.embedder)
+            self.conversations[spec["key"]] = Conversation.objects.create(document=document, title="t")
+
+    def _ask(self, key, question):
+        llm = FakeLLM("Réponse [1].")
+        answer = answer_question(
+            self.conversations[key], question, embedder=self.embedder, client=llm
+        )
+        return answer, llm
+
+    def test_each_subject_gets_the_right_passage_and_pages(self):
+        cases = [
+            ("droit", "responsabilité des associés SNC dettes", "indéfiniment et solidairement", 1),
+            ("informatique", "méthode HTTP DELETE supprimer ressource", "DELETE pour supprimer", 1),
+            ("mathematiques", "espérance loi binomiale", "E(X) = np", 3),
+            ("data_science", "régression logistique fonction sigmoïde", "fonction sigmoïde", 2),
+            ("english", "logistic regression sigmoid function", "sigmoid function", 1),
+        ]
+        for key, question, needle, page in cases:
+            with self.subTest(key=key):
+                answer, llm = self._ask(key, question)
+                self.assertTrue(answer.grounded)
+                self.assertIn(needle, llm.prompts[0])
+                pages = {(s["page_start"], s["page_end"]) for s in answer.sources}
+                self.assertTrue(any(start <= page <= end for start, end in pages))
+
+    def test_question_outside_the_course_is_refused(self):
+        answer, llm = self._ask("mathematiques", "recette tarte pommes cannelle")
+        self.assertFalse(answer.grounded)
+        self.assertEqual(llm.prompts, [])

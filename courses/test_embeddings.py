@@ -2,18 +2,19 @@ import math
 import shutil
 import tempfile
 import zlib
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import connection
-from django.test import TestCase, override_settings
+from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 
 from accounts.models import User
 
 from .models import CourseDocument, DocumentChunk
 from .services.embeddings import BaseEmbedder, index_document
-from .services.retrieval import search_chunks
+from .services.retrieval import lexical_rank, search_chunks
 
 PASSWORD = "Str0ng-Pass!2026"
 TEMP_MEDIA = tempfile.mkdtemp()
@@ -168,3 +169,71 @@ class EmbeddingViewTests(TestCase):
     def test_cannot_search_other_users_document(self):
         response = self.client.get(reverse("courses:search", args=[self.bob_doc.pk]), {"q": "chat"})
         self.assertEqual(response.status_code, 404)
+
+
+def axis(a, b):
+    vector = [0.0] * DIM
+    vector[0], vector[1] = a, b
+    return vector
+
+
+class PinnedEmbedder(BaseEmbedder):
+    """Plongements imposés : le classement vectoriel est connu à l'avance."""
+
+    name = "pinned"
+    model_name = "pinned"
+
+    def __init__(self, vectors):
+        self.vectors = vectors
+
+    def embed_passages(self, texts):
+        return [self.vectors[text] for text in texts]
+
+    def embed_query(self, text):
+        return self.vectors["QUERY"]
+
+
+class LexicalTests(SimpleTestCase):
+    def _chunks(self, *texts):
+        return [SimpleNamespace(id=i, text=t) for i, t in enumerate(texts)]
+
+    def test_acronym_is_found(self):
+        chunks = self._chunks("la SARL est une forme", "la SNC est une société en nom collectif", "autre sujet")
+        self.assertEqual(lexical_rank(chunks, "C est quoi la SNC ?")[0].id, 1)
+
+    def test_sa_is_not_ignored_as_a_stopword(self):
+        chunks = self._chunks("la SA exige un capital", "la SARL est simple")
+        self.assertEqual(lexical_rank(chunks, "capital d'une SA")[0].id, 0)
+
+    def test_accents_and_case_are_ignored(self):
+        chunks = self._chunks("Société anonyme", "autre")
+        self.assertEqual(lexical_rank(chunks, "SOCIETE")[0].id, 0)
+
+    def test_no_match_and_stopwords_only_give_nothing(self):
+        chunks = self._chunks("texte quelconque")
+        self.assertEqual(lexical_rank(chunks, "zorglub"), [])
+        self.assertEqual(lexical_rank(chunks, "c est quoi la ?"), [])
+
+
+@override_settings(MEDIA_ROOT=TEMP_MEDIA)
+class HybridSearchTests(TestCase):
+    def setUp(self):
+        alice = User.objects.create_user("alice", "alice@example.com", PASSWORD)
+        self.texts = ["alpha", "beta", "gamma", "le zorglub est un animal"]
+        self.embedder = PinnedEmbedder({
+            "QUERY": axis(1, 0), "alpha": axis(1, 0), "beta": axis(1, 0.2),
+            "gamma": axis(1, 0.5), self.texts[3]: axis(1, 1.0),  # 4e rang vectoriel
+        })
+        self.document = make_document(alice, "Hybride", texts=self.texts)
+        index_document(self.document, self.embedder)
+
+    @override_settings(RETRIEVAL_LEXICAL_WEIGHT=1.0)
+    def test_keyword_match_is_promoted_when_enabled(self):
+        hits = search_chunks(self.document, "zorglub", k=2, embedder=self.embedder)
+        self.assertEqual(hits[0].chunk.text, self.texts[3])
+        self.assertAlmostEqual(hits[0].score, 0.7071, places=3)  # score = cosinus, pas le rang
+
+    @override_settings(RETRIEVAL_LEXICAL_WEIGHT=0)
+    def test_default_order_is_pure_vector_order(self):
+        hits = search_chunks(self.document, "zorglub", k=4, embedder=self.embedder)
+        self.assertEqual([hit.chunk.text for hit in hits], self.texts)

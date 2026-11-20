@@ -23,7 +23,11 @@ def get_llm_client():
         from .ollama import OllamaClient
 
         return OllamaClient(
-            settings.LLM_API_KEY, model, settings.LLM_TIMEOUT, settings.LLM_BASE_URL
+            settings.LLM_API_KEY,
+            model,
+            settings.LLM_TIMEOUT,
+            settings.LLM_BASE_URL,
+            settings.LLM_NUM_CTX,
         )
     if provider == "gemini":
         from .gemini import GeminiClient

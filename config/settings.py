@@ -87,39 +87,59 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Pages privées (utilisées en phase 2)
+# Pages privées
 LOGIN_URL = "accounts:login"
 LOGIN_REDIRECT_URL = "dashboard"
 LOGOUT_REDIRECT_URL = "accounts:login"
 
-# Paramètres métier (utilisés dans les phases suivantes)
+# Documents et découpage (phases 3 et 4)
 MAX_UPLOAD_SIZE_MB = 20
 ALLOWED_UPLOAD_EXTENSIONS = [".pdf", ".txt"]
 CHUNK_SIZE = 800        # caractères par chunk
 CHUNK_OVERLAP = 100     # chevauchement entre chunks
+
 # Résumés (phase 5)
 SUMMARY_PROVIDER = os.getenv("SUMMARY_PROVIDER", "extractive")
-SUMMARY_MODEL_NAME = os.getenv(
-    "SUMMARY_MODEL_NAME", "csebuetnlp/mT5_multilingual_XLSum"
-)
+SUMMARY_MODEL_NAME = os.getenv("SUMMARY_MODEL_NAME", "csebuetnlp/mT5_multilingual_XLSum")
 SUMMARY_SECTION_CHARS = 1800   # taille d'une section envoyée au modèle
 SUMMARY_MAX_SECTIONS = 80      # garde-fou pour les modèles lents
+
 # LLM et quiz (phase 6)
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "").strip().lower()
 LLM_API_KEY = os.getenv("LLM_API_KEY", "")
 LLM_MODEL = os.getenv("LLM_MODEL", "").strip()
 LLM_TIMEOUT = int(os.getenv("LLM_TIMEOUT", "90"))
-QUIZ_MAX_QUESTIONS = 20
 LLM_BASE_URL = os.getenv("LLM_BASE_URL", "").strip()
+LLM_NUM_CTX = int(os.getenv("LLM_NUM_CTX", "8192"))
+QUIZ_MAX_QUESTIONS = 20
+
 # Embeddings et recherche (phase 7)
 EMBEDDING_MODEL_NAME = os.getenv("EMBEDDING_MODEL_NAME", "intfloat/multilingual-e5-small")
 EMBEDDING_DIMENSIONS = 384
 EMBEDDING_BATCH_SIZE = 16
 EMBEDDING_QUERY_PREFIX = "query: "      # propre à e5 ; vide pour d'autres modèles
 EMBEDDING_PASSAGE_PREFIX = "passage: "
-RETRIEVAL_TOP_K = 5
+RETRIEVAL_TOP_K = 8
+# Recherche hybride (vectorielle + BM25, fusion RRF).
+# Poids de la liste BM25 dans la fusion (la liste vectorielle a le poids 1) :
+# 0 = ordre vectoriel pur ; 1 = RRF standard, les deux méthodes à égalité.
+RETRIEVAL_LEXICAL_WEIGHT = float(os.getenv("RETRIEVAL_LEXICAL_WEIGHT", "1"))
+# Nombre de candidats de chaque méthode pris en compte par la fusion (même profondeur)
+RETRIEVAL_CANDIDATES = int(os.getenv("RETRIEVAL_CANDIDATES", "50"))
+
 # Chatbot RAG (phase 8)
 RAG_MIN_SCORE = float(os.getenv("RAG_MIN_SCORE", "0.83"))
-RAG_MAX_CONTEXT_CHARS = 4500
+RAG_SCORE_WINDOW = float(os.getenv("RAG_SCORE_WINDOW", "0.08"))
+RAG_MAX_CONTEXT_CHARS = 6500
 RAG_HISTORY_MESSAGES = 4
 RAG_MAX_QUESTION_CHARS = 1000
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "loggers": {
+        "chatbot": {"handlers": ["console"], "level": "INFO"},
+        "llm": {"handlers": ["console"], "level": "INFO"},
+    },
+}

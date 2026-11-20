@@ -1,4 +1,5 @@
 import logging
+import time
 
 from django.conf import settings
 from django.contrib import messages
@@ -89,6 +90,7 @@ def conversation_send(request, pk):
         )
 
     is_first = not conversation.messages.exists()
+    started = time.monotonic()
     try:
         answer = answer_question(conversation, question)
     except (RagError, LLMError, EmbeddingError) as exc:
@@ -98,6 +100,7 @@ def conversation_send(request, pk):
         return JsonResponse(
             {"error": "Erreur inattendue pendant la génération de la réponse."}, status=500
         )
+    logger.info("Réponse du chatbot en %.1f s", time.monotonic() - started)
 
     # On n'enregistre qu'une fois la réponse obtenue : pas de question orpheline
     with transaction.atomic():
