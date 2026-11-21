@@ -13,7 +13,7 @@ Bilan pour la soutenance (état de chaque fonctionnalité, résultats mesurés, 
 **Démarrage rapide** (une fois les prérequis de la section 3 installés) :
 
 ```powershell
-git clone https://github.com/hadirbejaoui/educational_assistant. educational_assistant
+git clone https://github.com/hadirbejaoui/educational_assistant.git
 cd educational_assistant
 python -m venv .venv ; .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
@@ -123,7 +123,7 @@ pgvector n'est pas fourni par l'installeur PostgreSQL. Il faut le compiler une f
 ### 3.3 Projet
 
 ```powershell
-git clone https://github.com/hadirbejaoui/educational_assistant. educational_assistant
+git clone https://github.com/hadirbejaoui/educational_assistant.git
 cd educational_assistant
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1

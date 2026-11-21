@@ -20,7 +20,7 @@ Légende : ✅ fait et vérifié · ⚠️ fait partiellement · ❌ à faire
 | Livrable | État | Remarque |
 |---|---|---|
 | Rapport PDF détaillé | ✅ | Rédigé (4 chapitres, diagrammes UML, captures d'écran, résultats mesurés, limites, lien GitHub) ; remis séparément, il n'est pas versionné dans le dépôt. |
-| Code source sur GitHub, organisé et commenté | ✅ | Applications Django séparées, logique dans `services/`, docstrings en français. **Le dépôt s'appelle `educational_assistant.` (point final)** : à renommer avant de donner le lien. |
+| Code source sur GitHub, organisé et commenté | ✅ | Applications Django séparées, logique dans `services/`, docstrings en français. Dépôt : https://github.com/hadirbejaoui/educational_assistant |
 | README : prérequis, installation, exécution | ✅ | `README.md` : Windows pas à pas, pgvector, Ollama, variables, commandes, tests |
 | Script ou notebook de démonstration | ✅ | `python manage.py demo` (avec ou sans LLM) : import, indexation, recherche, trois résumés, QCM, chatbot sur `demo/cours_exemple.txt`, puis nettoyage ; testé (`core/test_demo.py`). |
 
@@ -62,7 +62,7 @@ Légende : ✅ fait et vérifié · ⚠️ fait partiellement · ❌ à faire
 | Pertinence et robustesse du chatbot | 6 réponses relues : 5 appuyées par leurs sources, 1 partiellement (à confirmer par la relecture de l'étudiante) ; marge du seuil de refus faible (0,010) |
 | Qualité du code | 368 tests, 95 % de couverture, services séparés des vues, docstrings |
 | Qualité du rapport PDF | ✅ rédigé (évaluations humaines signalées « À réaliser ») |
-| Qualité du dépôt GitHub | README complet (démarrage rapide, installation, démonstration) ; renommage du dépôt à faire |
+| Qualité du dépôt GitHub | README complet (démarrage rapide, installation, démonstration) |
 | Originalité et extensions | Évaluation chiffrée avec intervalles de confiance, recherche hybride, sécurité (CSP, limitation de fréquence, anti-injection), espaces privés par compte testés, tableau de bord et historique des notes, interface accessible, administration personnalisée |
 | Qualité des résumés (fidélité, concision, clarté) | ⚠️ non notée par des humains ; ROUGE non calculé (pas de résumé de référence) |
 | Cohérence et pertinence des quiz | ⚠️ non évaluée formellement |
