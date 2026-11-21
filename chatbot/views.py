@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 def _user_conversations(user):
-    return Conversation.objects.filter(document__owner=user)
+    return Conversation.objects.filter(owner=user)
 
 
 @login_required
@@ -47,14 +47,15 @@ def conversation_create(request):
 
     document = form.cleaned_data["document"]
     try:
-        # Indexe seulement les passages qui n'ont pas encore de vecteur
+        # Le cours est indexé dès l'import ; ici, seuls les passages encore sans vecteur
+        # (échec à l'import, changement de modèle) sont calculés, sinon rien n'est fait.
         index_document(document, get_embedder())
     except EmbeddingError as exc:
         messages.error(request, str(exc))
         return redirect("chatbot:list")
 
     conversation = Conversation.objects.create(
-        document=document, title=f"Discussion - {document.title}"[:255]
+        document=document, owner=request.user, title=f"Discussion - {document.title}"[:255]
     )
     return redirect("chatbot:detail", pk=conversation.pk)
 

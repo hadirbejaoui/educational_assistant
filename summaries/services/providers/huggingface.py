@@ -36,7 +36,7 @@ class HuggingFaceProvider(BaseSummaryProvider):
                 _LOADED[self.model_name] = (tokenizer, model)
             return _LOADED[self.model_name]
 
-    def summarize(self, text, max_words):
+    def summarize(self, text, max_words, level="medium"):
         text = text.strip()
         if not text:
             return ""

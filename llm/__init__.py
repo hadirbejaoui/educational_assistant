@@ -5,8 +5,11 @@ from .base import BaseLLMClient, LLMError
 DEFAULT_MODELS = {"anthropic": "claude-sonnet-5-5", "ollama": "qwen3:4b"}
 
 
-def get_llm_client():
-    """Choisit le fournisseur selon LLM_PROVIDER dans .env."""
+def get_llm_client(model=None):
+    """Choisit le fournisseur selon LLM_PROVIDER dans .env.
+
+    `model` remplace LLM_MODEL pour un usage précis (ex. SUMMARY_LLM_MODEL pour les résumés).
+    """
     provider = settings.LLM_PROVIDER
     if not provider:
         raise LLMError("Aucun LLM configuré. Renseignez LLM_PROVIDER dans .env.")
@@ -15,7 +18,7 @@ def get_llm_client():
     if provider != "ollama" and not settings.LLM_API_KEY:
         raise LLMError("La clé API du LLM (LLM_API_KEY) est absente de .env.")
 
-    model = settings.LLM_MODEL or DEFAULT_MODELS.get(provider, "")
+    model = model or settings.LLM_MODEL or DEFAULT_MODELS.get(provider, "")
     if not model:
         raise LLMError("Renseignez LLM_MODEL dans .env (nom du modèle à utiliser).")
 

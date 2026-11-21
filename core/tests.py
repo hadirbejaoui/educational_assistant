@@ -33,7 +33,7 @@ def make_document(owner, title="Cours", status=CourseDocument.Status.READY):
 
 
 def make_quiz(document, title="Quiz", question_text="Question ?"):
-    quiz = Quiz.objects.create(document=document, title=title, difficulty="medium", provider="fake")
+    quiz = Quiz.objects.create(document=document, owner=document.owner, title=title, difficulty="medium", provider="fake")
     question = Question.objects.create(
         quiz=quiz, order=1, text=question_text, explanation="Parce que.", difficulty="medium"
     )
@@ -44,7 +44,7 @@ def make_quiz(document, title="Quiz", question_text="Question ?"):
 
 def make_attempt(quiz, score, total, completed=True):
     return QuizAttempt.objects.create(
-        quiz=quiz, score=score, total=total,
+        quiz=quiz, user=quiz.owner, score=score, total=total,
         completed_at=timezone.now() if completed else None,
     )
 
@@ -69,8 +69,8 @@ class DataTestCase(TestCase):
         self.bob_quiz = make_quiz(self.bob_doc, "Quiz secret de Bob")
         self.attempt = make_attempt(self.quiz, 3, 4)
         self.bob_attempt = make_attempt(self.bob_quiz, 1, 4)
-        self.conversation = Conversation.objects.create(document=self.doc, title="Conv Alice")
-        self.bob_conversation = Conversation.objects.create(document=self.bob_doc, title="Conv secrète de Bob")
+        self.conversation = Conversation.objects.create(document=self.doc, owner=self.doc.owner, title="Conv Alice")
+        self.bob_conversation = Conversation.objects.create(document=self.bob_doc, owner=self.bob_doc.owner, title="Conv secrète de Bob")
         self.client.login(username="alice", password=PASSWORD)
 
 
@@ -404,3 +404,35 @@ class DesignSystemTests(DataTestCase):
         from core.templatetags.ui import initials
         self.assertEqual(initials(User(username="zoe")), "Z")
         self.assertEqual(initials(User(username="x", first_name="hadir", last_name="bejaoui")), "HB")
+
+
+class AdminThemeTests(TestCase):
+    """L'admin Django reprend le design system de l'application (templates/admin/base_site.html)."""
+
+    def test_login_and_pages_use_the_application_theme(self):
+        response = self.client.get(reverse("admin:login"))
+        self.assertContains(response, "css/admin.css")
+        self.assertContains(response, "css/tokens.css")
+        self.assertNotContains(response, "dark_mode.css")  # pas de thème sombre, comme l'application
+        User.objects.create_superuser("prof", "prof@example.com", PASSWORD)
+        self.client.login(username="prof", password=PASSWORD)
+        for url in (reverse("admin:index"), reverse("admin:courses_coursedocument_changelist"),
+                    reverse("admin:quizzes_quiz_changelist"), reverse("admin:summaries_summary_changelist")):
+            with self.subTest(url=url):
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, "Assistant pédagogique")
+                self.assertContains(response, "Retour à l'application")
+                self.assertNotContains(response, ' style="')  # aucune règle inline (CSP stricte)
+
+    def test_password_change_pages_keep_the_theme_without_theme_toggle(self):
+        User.objects.create_superuser("prof", "prof@example.com", PASSWORD)
+        self.client.login(username="prof", password=PASSWORD)
+        for url in (reverse("admin:password_change"), reverse("admin:password_change_done")):
+            with self.subTest(url=url):
+                response = self.client.get(url)
+                self.assertContains(response, "css/admin.css")
+                self.assertContains(response, "Retour à l'application")
+                self.assertContains(response, 'class="admin-logout"')
+                self.assertContains(response, 'aria-current="page"')
+                self.assertNotContains(response, "theme-toggle")  # le thème sombre est désactivé

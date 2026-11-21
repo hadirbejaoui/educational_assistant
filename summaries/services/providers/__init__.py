@@ -14,4 +14,8 @@ def get_provider():
         from .huggingface import HuggingFaceProvider
 
         return HuggingFaceProvider(settings.SUMMARY_MODEL_NAME)
+    if name == "llm":
+        from .llm import LLMSummaryProvider
+
+        return LLMSummaryProvider()
     raise SummaryProviderError(f"Fournisseur de résumé inconnu : « {name} ».")

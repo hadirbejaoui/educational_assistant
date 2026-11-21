@@ -95,7 +95,11 @@
 
 /* ---------- Résumés ---------- */
 .summary-text { max-width: 72ch; }
-.summary-text p { margin-bottom: var(--space-4); }
+.summary-text p, .summary-text ul { margin-bottom: var(--space-4); }
+.summary-text h3 { margin: var(--space-6) 0 var(--space-2); font-size: 1.1rem; }
+.summary-text h4 { margin: var(--space-4) 0 var(--space-2); font-size: 1rem; }
+.summary-text h3:first-child, .summary-text h4:first-child { margin-top: 0; }
+.summary-text ul { padding-left: var(--space-6); list-style: disc; }
 
 /* ---------- Passages (aperçu, recherche) ---------- */
 .passage { padding: var(--space-4) 0; border-bottom: 1px solid var(--color-border); }

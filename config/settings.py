@@ -103,8 +103,30 @@ CHUNK_OVERLAP = 100     # chevauchement entre chunks
 # Résumés (phase 5)
 SUMMARY_PROVIDER = os.getenv("SUMMARY_PROVIDER", "extractive")
 SUMMARY_MODEL_NAME = os.getenv("SUMMARY_MODEL_NAME", "csebuetnlp/mT5_multilingual_XLSum")
-SUMMARY_SECTION_CHARS = 1800   # taille d'une section envoyée au modèle
+SUMMARY_SECTION_CHARS = 1800   # taille d'une section envoyée au modèle (mT5 : 512 tokens au plus)
+SUMMARY_LLM_SECTION_CHARS = int(os.getenv("SUMMARY_LLM_SECTION_CHARS", "6000"))  # fournisseur « llm »
+# Modèle du LLM réservé aux résumés (vide = LLM_MODEL). Ex. qwen3:4b-instruct : sans raisonnement,
+# bien plus rapide que la variante « thinking » sur une machine modeste.
+SUMMARY_LLM_MODEL = os.getenv("SUMMARY_LLM_MODEL", "").strip()
 SUMMARY_MAX_SECTIONS = 80      # garde-fou pour les modèles lents
+# Longueur visée de chaque niveau : `ratio` × nombre de mots du cours, bornée par
+# min_words / max_words (et jamais plus que le cours lui-même). Le résumé grandit
+# donc avec le cours au lieu d'être plafonné à quelques dizaines de mots.
+# `section_scale` : fraction de la taille de section du fournisseur. Le détaillé travaille
+# sur des sections deux fois plus courtes : mesuré sur un cours réel, un petit LLM ne
+# résume que le début d'une longue section et en omet la suite.
+SUMMARY_LEVELS = {
+    "short": {"ratio": 0.05, "min_words": 40, "max_words": 150, "section_scale": 1},
+    "medium": {"ratio": 0.12, "min_words": 120, "max_words": 600, "section_scale": 1},
+    "detailed": {"ratio": 0.25, "min_words": 250, "max_words": 2500, "section_scale": 0.5},
+}
+# Court et moyen : chaque section garde un peu plus de matière que sa part finale,
+# pour que la synthèse finale choisisse parmi davantage d'informations.
+SUMMARY_MAP_EXPANSION = 1.5
+SUMMARY_MIN_SECTION_WORDS = 40   # une section n'est jamais résumée en moins de mots
+# Longueur maximale demandée en un seul appel (≈ 1 000 tokens générés : reste dans
+# le contexte de LLM_NUM_CTX avec une section de SUMMARY_LLM_SECTION_CHARS)
+SUMMARY_MAX_WORDS_PER_CALL = 700
 
 # LLM et quiz (phase 6)
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "").strip().lower()
@@ -114,6 +136,8 @@ LLM_TIMEOUT = int(os.getenv("LLM_TIMEOUT", "90"))
 LLM_BASE_URL = os.getenv("LLM_BASE_URL", "").strip()
 LLM_NUM_CTX = int(os.getenv("LLM_NUM_CTX", "8192"))
 QUIZ_MAX_QUESTIONS = 20
+QUIZ_BATCH_SIZE = 5               # questions demandées au LLM par appel
+QUIZ_MAX_CONTEXT_CHARS = 9000     # extrait du cours envoyé pour chaque lot
 
 # Embeddings et recherche (phase 7)
 EMBEDDING_MODEL_NAME = os.getenv("EMBEDDING_MODEL_NAME", "intfloat/multilingual-e5-small")
@@ -143,6 +167,7 @@ LOGGING = {
     "loggers": {
         "chatbot": {"handlers": ["console"], "level": "INFO"},
         "llm": {"handlers": ["console"], "level": "INFO"},
+        "summaries": {"handlers": ["console"], "level": "INFO"},
     },
 }
 

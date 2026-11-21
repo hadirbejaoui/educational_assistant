@@ -17,11 +17,14 @@ class QuestionAdmin(admin.ModelAdmin):
 
 @admin.register(Quiz)
 class QuizAdmin(admin.ModelAdmin):
-    list_display = ("title", "document", "difficulty", "provider", "created_at")
-    list_select_related = ("document",)
+    list_display = ("title", "owner", "document", "difficulty", "provider", "created_at")
+    list_filter = ("difficulty", "owner")
+    list_select_related = ("owner", "document")
+    search_fields = ("title", "owner__username", "document__title")
 
 
 @admin.register(QuizAttempt)
 class QuizAttemptAdmin(admin.ModelAdmin):
-    list_display = ("quiz", "score", "total", "completed_at")
-    list_select_related = ("quiz",)
+    list_display = ("quiz", "user", "score", "total", "completed_at")
+    list_filter = ("user",)
+    list_select_related = ("quiz", "user")

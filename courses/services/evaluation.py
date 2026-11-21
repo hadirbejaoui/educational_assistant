@@ -7,6 +7,8 @@ avec des vecteurs normalisés, le produit scalaire donne exactement l'ordre de
 CosineDistance.
 """
 
+import csv
+import io
 import math
 import re
 import time
@@ -280,3 +282,32 @@ def wilson_interval(successes, total, z=1.96):
     centre = (p + z * z / (2 * total)) / (1 + z * z / total)
     margin = z * math.sqrt(p * (1 - p) / total + z * z / (4 * total * total)) / (1 + z * z / total)
     return max(0.0, centre - margin), min(1.0, centre + margin)
+
+
+# --- Grilles de relecture (CSV ouverts et enregistrés dans Excel) -------------------
+
+def write_sheet(path, columns, rows):
+    """Écrit une grille CSV lisible directement dans Excel en français (BOM UTF-8, « ; »)."""
+    with open(path, "w", encoding="utf-8-sig", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=columns, delimiter=";")
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def read_sheet(path):
+    """Lit une grille CSV quel que soit le format choisi dans Excel à l'enregistrement :
+    « CSV UTF-8 » (UTF-8, ;), « CSV (séparateur : point-virgule) » (Windows-1252, ;)
+    ou un CSV séparé par des virgules."""
+    with open(path, "rb") as handle:
+        raw = handle.read()
+    for encoding in ("utf-8-sig", "cp1252"):
+        try:
+            text = raw.decode(encoding)
+            break
+        except UnicodeDecodeError:
+            continue
+    else:  # octets indéfinis en cp1252 : latin-1 décode tout, sans jamais échouer
+        text = raw.decode("latin-1")
+    first_line = text.split("\n", 1)[0]
+    delimiter = ";" if first_line.count(";") >= first_line.count(",") else ","
+    return list(csv.DictReader(io.StringIO(text, newline=""), delimiter=delimiter))

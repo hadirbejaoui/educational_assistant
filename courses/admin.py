@@ -6,7 +6,8 @@ from .models import CourseDocument, DocumentChunk, DocumentPage
 @admin.register(CourseDocument)
 class CourseDocumentAdmin(admin.ModelAdmin):
     list_display = ("title", "owner", "file_type", "status", "uploaded_at")
-    list_filter = ("file_type", "status")
+    list_filter = ("file_type", "status", "owner")
+    list_select_related = ("owner",)
     search_fields = ("title", "owner__username")
 
 

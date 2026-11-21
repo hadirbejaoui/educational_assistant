@@ -1,5 +1,6 @@
 import shutil
 import tempfile
+from unittest.mock import patch
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
@@ -8,11 +9,14 @@ from django.urls import reverse
 from accounts.models import User
 
 from .models import CourseDocument
+from .test_embeddings import FakeEmbedder
 
 PASSWORD = "Str0ng-Pass!2026"
 TEMP_MEDIA = tempfile.mkdtemp()
 
 
+# L'import indexe le cours : faux modèle d'embeddings (ni téléchargement ni calcul réel)
+@patch("courses.views.get_embedder", new=FakeEmbedder)
 @override_settings(MEDIA_ROOT=TEMP_MEDIA)
 class DocumentTests(TestCase):
     @classmethod

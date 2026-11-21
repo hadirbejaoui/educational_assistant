@@ -1,4 +1,9 @@
 from django.contrib import admin
+
+# Textes de l'admin Django (l'habillage visuel est dans templates/admin/base_site.html)
+admin.site.site_header = "Assistant pédagogique"
+admin.site.site_title = "Administration"
+admin.site.index_title = "Tableau de bord d'administration"
 from django.urls import include, path
 
 from core import views as core_views

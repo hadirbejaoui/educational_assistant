@@ -5,14 +5,16 @@ from ..models import QuizAttempt, StudentAnswer
 
 
 def grade_attempt(quiz, selections):
-    """Corrige une tentative.
+    """Corrige une tentative du propriétaire du quiz.
 
     `selections` : {id_question: id_choix}. Un choix qui n'appartient pas à la
     question, ou une question sans réponse, compte comme faux.
     """
     questions = list(quiz.questions.prefetch_related("choices"))
     with transaction.atomic():
-        attempt = QuizAttempt.objects.create(quiz=quiz, total=len(questions))
+        attempt = QuizAttempt.objects.create(
+            quiz=quiz, user=quiz.owner, total=len(questions)
+        )
         answers, score = [], 0
         for question in questions:
             wanted_id = selections.get(question.id)

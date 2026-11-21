@@ -21,7 +21,7 @@ class ExtractiveProvider(BaseSummaryProvider):
     name = "extractive"
     model_name = "frequency-based"
 
-    def summarize(self, text, max_words):
+    def summarize(self, text, max_words, level="medium"):
         text = text.strip()
         words = text.split()
         if len(words) <= max_words:
