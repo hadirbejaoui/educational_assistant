@@ -1,9 +1,11 @@
-
-
-# Register your models here.
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
 from .models import User
 
-admin.site.register(User, UserAdmin)
+
+@admin.register(User)
+class AccountAdmin(UserAdmin):
+    list_display = ("username", "email", "first_name", "last_name", "is_staff", "is_active", "date_joined")
+    list_filter = ("is_staff", "is_superuser", "is_active")
+    ordering = ("-date_joined",)

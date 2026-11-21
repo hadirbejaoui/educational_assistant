@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 from courses.models import CourseDocument
@@ -11,6 +12,10 @@ class Quiz(models.Model):
 
     document = models.ForeignKey(
         CourseDocument, on_delete=models.CASCADE, related_name="quizzes"
+    )
+    # Les cours sont partagés ; chaque étudiant a ses propres quiz
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="quizzes"
     )
     title = models.CharField(max_length=255)
     difficulty = models.CharField(max_length=10, choices=Difficulty.choices)
@@ -69,6 +74,9 @@ class Choice(models.Model):
 
 class QuizAttempt(models.Model):
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name="attempts")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="quiz_attempts"
+    )
     started_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     score = models.PositiveIntegerField(default=0)

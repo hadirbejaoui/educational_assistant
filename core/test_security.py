@@ -76,7 +76,7 @@ class RateLimitTests(TestCase):
         self.document = make_document(self.alice)
         self.embedder = FakeEmbedder()
         index_document(self.document, self.embedder)
-        self.conversation = Conversation.objects.create(document=self.document, title="t")
+        self.conversation = Conversation.objects.create(document=self.document, owner=self.document.owner, title="t")
 
     def tearDown(self):
         cache.clear()
@@ -175,7 +175,7 @@ class RagPromptInjectionTests(TestCase):
         document = make_document(alice, texts=[PromptInjectionTests.ATTACK])
         embedder = FakeEmbedder()
         index_document(document, embedder)
-        conversation = Conversation.objects.create(document=document, title="t")
+        conversation = Conversation.objects.create(document=document, owner=document.owner, title="t")
         llm = FakeLLM("La SNC est une société [1].")
         answer_question(conversation, "La SNC est une société ?", embedder=embedder, client=llm)
         prompt = llm.prompts[0]

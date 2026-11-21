@@ -116,11 +116,6 @@ def _analyze(text):
     return tuple(word for word in words if word), tuple(bigrams)
 
 
-def _tokens(text):
-    """Mots normalisés d'un texte (sans mots vides). Conservé pour compatibilité."""
-    return list(_analyze(text)[0])
-
-
 def _terms(text):
     words, bigrams = _analyze(text)
     return Counter(words), Counter(bigrams)

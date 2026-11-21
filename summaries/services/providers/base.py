@@ -9,5 +9,9 @@ class BaseSummaryProvider(ABC):
     is_slow = False  # True pour les modèles lourds (limite le nombre de sections)
 
     @abstractmethod
-    def summarize(self, text, max_words):
-        """Retourne un résumé d'au plus environ `max_words` mots."""
+    def summarize(self, text, max_words, level="medium"):
+        """Retourne un résumé d'au plus environ `max_words` mots.
+
+        `level` (short, medium, detailed) indique le style attendu ; les fournisseurs
+        qui ne savent pas adapter leur style (extractif, mT5) l'ignorent.
+        """

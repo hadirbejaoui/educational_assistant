@@ -16,9 +16,9 @@ Bilan pour la soutenance (état de chaque fonctionnalité, résultats mesurés, 
 
 | Fonction | Ce qu'elle fait |
 |---|---|
-| Comptes | Inscription, connexion, profil. Chaque étudiant ne voit que ses données (sinon 404). |
-| Cours | Import PDF/TXT (glisser-déposer), extraction PyMuPDF, nettoyage, découpage en passages, indexation vectorielle. |
-| Résumés | Court, moyen, détaillé. Extractif (rapide, sans modèle) ou Hugging Face (mT5). |
+| Comptes | Inscription, connexion, profil. Chaque compte a son propre espace : ses cours, résumés, quiz, notes et conversations ; ceux d'un autre compte donnent 404. L'administrateur (`is_staff`) gère les comptes dans l'admin Django (`/admin/`) et a lui aussi son espace privé. |
+| Cours | Import PDF/TXT par chaque compte (glisser-déposer), extraction PyMuPDF, nettoyage, découpage en passages, indexation vectorielle dès l'import ; réindexation, retraitement et suppression de ses propres cours. |
+| Résumés | Court, moyen, détaillé : longueur proportionnelle au cours et consignes propres à chaque niveau (voir ci-dessous). Résumé abstractif par LLM (Qwen3 4B instruct) avec génération contrôlée ; mT5 et extractif disponibles et comparés. |
 | Quiz | QCM générés par le LLM, JSON validé, complément automatique si des questions manquent, note sur 20, correction expliquée. |
 | Chatbot | RAG : recherche hybride (vecteurs + BM25, fusion RRF), réponse citée, refus si le cours ne contient pas la réponse. |
 | Tableau de bord | Compteurs, moyenne aux quiz, derniers cours, dernières notes, dernières conversations ; historiques paginés. |
@@ -27,14 +27,14 @@ Bilan pour la soutenance (état de chaque fonctionnalité, résultats mesurés, 
 
 ```
 config/          réglages (settings.py = développement, settings_production.py = production), URLs
-core/            tableau de bord, pagination, limitation de fréquence, en-têtes de sécurité, balises d'interface
+core/            rôles et accès (permissions.py), tableau de bord, pagination, limitation de fréquence, en-têtes de sécurité, balises d'interface
 accounts/        utilisateurs (modèle User personnalisé, e-mail unique)
 courses/         documents, pages, passages ; services : extraction, nettoyage, découpage, embeddings, recherche
-summaries/       résumés ; services : sections, fournisseurs (extractif, Hugging Face)
+summaries/       résumés ; services : sections, fournisseurs (LLM, Hugging Face mT5, extractif)
 quizzes/         quiz, questions, choix, tentatives ; services : génération, validation JSON, correction
 chatbot/         conversations, messages ; service RAG ; commandes d'évaluation
 llm/             clients Ollama / Gemini / Anthropic derrière une interface commune, protection anti-injection
-templates/       gabarits Django (aucun CSS ni JS dans les gabarits)
+templates/       gabarits Django (aucun CSS ni JS dans les gabarits) ; templates/admin/ habille l'admin Django (static/css/admin.css)
 static/css/      design system : tokens, base, layout, components, pages
 static/js/       JavaScript classique : main (menu, chargements), chat, quiz, upload
 evaluation/      questions d'évaluation sur les cours réels, grilles de relecture
@@ -43,6 +43,24 @@ scripts/         sauvegarde et restauration (PowerShell)
 
 Règle suivie partout : **la logique métier est dans `services/`**, les vues ne font que
 lire la requête, appeler un service et choisir la réponse.
+
+### Les trois niveaux de résumé
+
+Un cours est découpé en sections qui tiennent dans le contexte du modèle
+(`SUMMARY_LLM_SECTION_CHARS`, 6 000 caractères pour le LLM), puis résumé en map-reduce
+(`summaries/services/summarization.py`) :
+
+| Niveau | Longueur visée (`SUMMARY_LEVELS`) | Consignes données au LLM | Fusion |
+|---|---|---|---|
+| Court | 5 % du cours, entre 40 et 150 mots | idées essentielles, un paragraphe, sans détails ni exemples | résumés partiels fusionnés, puis synthèse finale |
+| Moyen | 12 % du cours, entre 120 et 600 mots | notions importantes expliquées brièvement, un paragraphe par notion, définitions essentielles | résumés partiels fusionnés, puis synthèse finale |
+| Détaillé | 25 % du cours, entre 250 et 2 500 mots | toutes les parties dans l'ordre du cours, intertitres, définitions, exemples, chiffres, listes | aucune synthèse finale (elle perdrait des détails) : une partie par section, sous un intertitre de pages |
+
+Chaque section reçoit une part de la longueur visée proportionnelle à sa taille. Les
+tours de fusion réduisent le texte jusqu'à ce qu'il tienne dans une section : aucune
+requête ne dépasse le contexte du modèle (`LLM_NUM_CTX`). Un résumé n'est jamais plus
+long que le cours lui-même. Les intertitres et listes produits par le LLM sont affichés
+par le filtre `rich_text` (`core/templatetags/ui.py`), qui échappe tout le reste du texte.
 
 ### Le chemin d'une question au chatbot
 
@@ -102,13 +120,16 @@ python -c "from django.core.management.utils import get_random_secret_key; print
 
 & "C:\Program Files\PostgreSQL\18\bin\createdb.exe" -U postgres educational_assistant
 python manage.py migrate
-python manage.py createsuperuser
+python manage.py createsuperuser         # compte administrateur : accès à l'admin Django (/admin/)
 ```
+
+Les étudiants créent leur compte depuis la page d'inscription.
 
 ### 3.4 Ollama
 
 ```powershell
-ollama pull qwen3:4b          # 2,5 Go ; voir « Choix du modèle » en section 9
+ollama pull qwen3:4b            # 2,5 Go : chatbot et quiz
+ollama pull qwen3:4b-instruct   # 2,5 Go : résumés (sans raisonnement, rapide)
 ollama list                   # vérifie que le modèle est présent
 ```
 
@@ -139,7 +160,8 @@ Le fichier `.env.example` liste et commente toutes les variables. Les principale
 | `LLM_PROVIDER` | `ollama`, `gemini` ou `anthropic` | — |
 | `LLM_MODEL`, `LLM_API_KEY`, `LLM_BASE_URL` | modèle, clé (cloud), adresse d'Ollama | — |
 | `LLM_TIMEOUT` | délai maximal d'une réponse (s) | `90` |
-| `SUMMARY_PROVIDER` | `extractive` ou `huggingface` | `extractive` |
+| `SUMMARY_PROVIDER` | `llm`, `huggingface` (mT5) ou `extractive` | `extractive` (`.env.example` : `llm`) |
+| `SUMMARY_LLM_MODEL` | modèle Ollama réservé aux résumés (vide = `LLM_MODEL`) | — (`.env.example` : `qwen3:4b-instruct`) |
 | `EMBEDDING_MODEL_NAME` | modèle d'embeddings (384 dimensions) | `intfloat/multilingual-e5-small` |
 | `RETRIEVAL_LEXICAL_WEIGHT` | poids de BM25 dans la fusion (0 = vecteurs seuls) | `1` |
 | `RAG_MIN_SCORE`, `RAG_SCORE_WINDOW` | seuil de refus et fenêtre de sélection | `0.83`, `0.08` |
@@ -156,6 +178,8 @@ Le fichier `.env.example` liste et commente toutes les variables. Les principale
 | `python manage.py rag_evaluate [--pooled] [--weights 0,1,2]` | compare vecteurs / BM25 / hybride sur un corpus synthétique multi-matières |
 | `python manage.py rag_eval_courses [--details]` | évaluation et calibration sur **vos cours** (`evaluation/rag_questions.json`) |
 | `python manage.py rag_faithfulness --sample 10` puis `--score fichier.csv` | fidélité des réponses, relue à la main |
+| `python manage.py compare_summaries --document ID [--level short]` | compare extractif, mT5 et LLM sur un cours (sans rien enregistrer) |
+| `python manage.py export_examples` puis `--score-summaries` / `--score-quiz` | exemples de résumés et de quiz pour le rapport, grilles d'évaluation qualitative |
 
 ## 6. Tests et qualité
 
@@ -168,14 +192,19 @@ python -m coverage report                          # couverture par fichier (voi
 ```
 
 Les tests n'appellent ni Internet, ni Ollama, ni le vrai modèle d'embeddings : ils
-utilisent de faux modèles déterministes. Ils couvrent l'isolation entre utilisateurs
-(404), l'échappement du HTML venant du LLM, la sécurité, et des parcours de bout en
+utilisent de faux modèles déterministes. Ils couvrent l'isolation entre comptes
+(404, identifiants forgés, RAG limité aux cours du compte : `core/test_isolation.py`), les trois niveaux de résumé sur des cours courts
+et longs, l'échappement du HTML venant du LLM, la sécurité, et des parcours de bout en
 bout (`core/test_end_to_end.py`).
 
 ## 7. Sécurité
 
-- **Isolation** : chaque requête passe par un filtre sur le propriétaire ; un autre
-  utilisateur reçoit 404 (pas 403, pour ne pas révéler l'existence de l'objet).
+- **Isolation des comptes, côté serveur** : toutes les vues passent par
+  `user_documents(user)` (`core/permissions.py`) ; quiz, tentatives et conversations sont en
+  plus filtrés par utilisateur. Un identifiant forgé (URL ou formulaire) donne 404 (pas 403,
+  pour ne pas révéler l'existence de l'objet). Masquer un bouton n'est pas une sécurité.
+- **RAG cloisonné** : la recherche (vecteurs pgvector et BM25) ne porte que sur les passages
+  du cours de la conversation, lui-même vérifié comme appartenant au compte.
 - **Fichiers privés** : `media/` n'est jamais servi directement ; le fichier original
   passe par la vue `courses:file`, qui vérifie la propriété.
 - **Validation des imports** : extension, taille (`MAX_UPLOAD_SIZE_MB`), signature `%PDF-`,
@@ -232,12 +261,15 @@ rester sur les réglages de développement.
 | Choix | Pourquoi |
 |---|---|
 | Django Templates + JS classique | exigence du projet ; pas d'étape de compilation, fonctionne hors ligne |
+| Vues Django, sans Django REST Framework | l'interface est rendue côté serveur et seul le chat appelle une vue JSON : une API REST n'aurait aucun client. Les permissions sont appliquées dans les vues (`core/permissions.py`), sans dépendance supplémentaire |
+| Un espace privé par compte | chaque étudiant étudie ses propres cours ; un résumé appartient à son cours, donc à un seul compte, sans champ propriétaire redondant |
 | PostgreSQL + pgvector | vecteurs et données métier dans la même base, filtrage par document en SQL |
 | `multilingual-e5-small` (384 dim.) | français + anglais, léger (CPU), qualité suffisante mesurée par `rag_evaluate` |
 | Recherche hybride RRF | les vecteurs comprennent les reformulations, BM25 retrouve les termes exacts ; RRF fusionne des rangs, sans calibrer des scores incomparables |
 | Seuil de refus avant le LLM | une question hors cours est refusée en 10 ms au lieu d'une minute de génération |
 | Ollama + Qwen3 4B | gratuit, local, tient dans 4 Go de VRAM ; données des étudiants jamais envoyées à un tiers |
-| Résumé extractif par défaut | instantané, sans GPU, ne peut pas inventer (phrases du cours) |
+| Résumés par LLM « instruct » avec génération contrôlée | comparaison mesurée sur des cours réels (`compare_summaries`) : mT5 XLSum, entraîné sur des articles de presse, **invente des faits** (« annoncée vendredi par le président de l'Assemblée nationale ») ; Qwen3 reste fidèle au texte. La variante instruct résume une section en 10 à 16 s, contre 7 à 8 min pour la variante « thinking » |
+| Extractif conservé en secours | instantané, sans GPU, ne peut pas inventer (phrases du cours) |
 
 ## 10. Limites connues
 
@@ -246,8 +278,13 @@ rester sur les réglages de développement.
   Elle raisonne 500 à 1 700 tokens avant chaque réponse, ignore `think: false`, et le
   raisonnement est retiré avant affichage (`llm/ollama.py`). Mesuré sur 6 questions de
   cours réels, machine au repos : **72,9 s en moyenne, 102 s au maximum** ; sous
-  charge, une réponse a dépassé 300 s. Piste d'amélioration non retenue pour ce projet :
-  la variante sans raisonnement `qwen3:4b-instruct` (2,5 Go).
+  charge, une réponse a dépassé 300 s. La variante sans raisonnement
+  `qwen3:4b-instruct` est utilisée pour les **résumés** (10 à 16 s par section) ; le
+  chatbot et les quiz restent sur `qwen3:4b`.
+- **Fidélité des résumés** : même avec un prompt contrôlé, un petit LLM peut simplifier
+  à l'excès une règle (ex. « dissolution si plus de 50 associés » au lieu de
+  « transformation en SA dans un délai d'un an, sinon dissolution judiciaire possible »).
+  D'où la grille de relecture (`export_examples`) et le maintien de l'extractif en secours.
 - **Requêtes bloquantes (choix assumé)** : résumé, quiz et chat occupent la requête
   HTTP pendant le traitement. L'interface affiche un minuteur, prévient au-delà de
   90 s, et le navigateur abandonne après `LLM_TIMEOUT` + 30 s en le disant. Une file de

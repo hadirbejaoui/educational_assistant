@@ -111,7 +111,7 @@ class RagTests(TestCase):
         self.embedder = FakeEmbedder()
         self.document = make_document(self.alice)
         index_document(self.document, self.embedder)
-        self.conversation = Conversation.objects.create(document=self.document, title="t")
+        self.conversation = Conversation.objects.create(document=self.document, owner=self.document.owner, title="t")
 
     def _ask(self, question, reply="La capitale est Paris [1]."):
         llm = FakeLLM(reply)
@@ -162,8 +162,8 @@ class ChatViewTests(TestCase):
         self.bob_doc = make_document(self.bob, "Cours Bob")
         index_document(self.document, self.embedder)
         index_document(self.bob_doc, self.embedder)
-        self.conversation = Conversation.objects.create(document=self.document, title="Conv Alice")
-        self.bob_conversation = Conversation.objects.create(document=self.bob_doc, title="Conv Bob")
+        self.conversation = Conversation.objects.create(document=self.document, owner=self.document.owner, title="Conv Alice")
+        self.bob_conversation = Conversation.objects.create(document=self.bob_doc, owner=self.bob_doc.owner, title="Conv Bob")
 
     def _send(self, message, reply="Paris [1].", conversation=None):
         conversation = conversation or self.conversation
@@ -303,7 +303,7 @@ class MultiSubjectRagTests(TestCase):
                 stored.page_start, stored.page_end = chunk.page_start, chunk.page_end
                 stored.save(update_fields=["page_start", "page_end"])
             index_document(document, self.embedder)
-            self.conversations[spec["key"]] = Conversation.objects.create(document=document, title="t")
+            self.conversations[spec["key"]] = Conversation.objects.create(document=document, owner=document.owner, title="t")
 
     def _ask(self, key, question):
         llm = FakeLLM("Réponse [1].")

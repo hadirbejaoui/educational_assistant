@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 from courses.models import CourseDocument
@@ -6,6 +7,10 @@ from courses.models import CourseDocument
 class Conversation(models.Model):
     document = models.ForeignKey(
         CourseDocument, on_delete=models.CASCADE, related_name="conversations"
+    )
+    # Les cours sont partagés ; chaque étudiant a ses propres conversations
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="conversations"
     )
     title = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)

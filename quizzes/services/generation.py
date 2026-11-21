@@ -5,7 +5,7 @@ import random
 from django.conf import settings
 from django.db import transaction
 
-from llm import LLMError, get_llm_client
+from llm import get_llm_client
 from llm.safety import neutralize_course_text
 
 from ..models import Choice, Question, Quiz
@@ -14,8 +14,6 @@ from .parsing import extract_json, validate_questions
 
 logger = logging.getLogger(__name__)
 
-BATCH_SIZE = 5
-MAX_CONTEXT_CHARS = 9000
 ATTEMPTS_PER_BATCH = 2
 COMPLEMENT_ROUNDS = 2  # tentatives supplémentaires si des questions manquent
 
@@ -58,7 +56,7 @@ def _context_for_batch(chunks, index, total_batches):
     parts, used = [], 0
     for chunk in segment:
         piece = f"[Pages {chunk.page_start}-{chunk.page_end}]\n{neutralize_course_text(chunk.text)}"
-        if parts and used + len(piece) > MAX_CONTEXT_CHARS:
+        if parts and used + len(piece) > settings.QUIZ_MAX_CONTEXT_CHARS:
             break
         parts.append(piece)
         used += len(piece)
@@ -95,7 +93,7 @@ def _ask(client, prompt, difficulty, wanted, collected, seen, document):
 
 
 def generate_quiz(document, count, difficulty, client=None, title=""):
-    """Génère un quiz pour un document et l'enregistre.
+    """Génère un quiz pour un document et l'enregistre au nom du propriétaire du cours.
 
     Si le modèle produit moins de questions que demandé, des appels de complément
     sont faits. Le quiz peut malgré tout être plus court : la vue compare alors
@@ -113,11 +111,11 @@ def generate_quiz(document, count, difficulty, client=None, title=""):
         raise QuizError("Ce document ne contient aucun passage exploitable.")
 
     client = client or get_llm_client()
-    total_batches = math.ceil(count / BATCH_SIZE)
+    total_batches = math.ceil(count / settings.QUIZ_BATCH_SIZE)
     collected, seen = [], set()
 
     for batch in range(total_batches):
-        wanted = min(BATCH_SIZE, count - len(collected))
+        wanted = min(settings.QUIZ_BATCH_SIZE, count - len(collected))
         if wanted <= 0:
             break
         context = _context_for_batch(chunks, batch, total_batches)
@@ -145,6 +143,7 @@ def generate_quiz(document, count, difficulty, client=None, title=""):
     with transaction.atomic():
         quiz = Quiz.objects.create(
             document=document,
+            owner=document.owner,
             title=(title or f"Quiz - {document.title}")[:255],
             difficulty=difficulty,
             provider=client.name,

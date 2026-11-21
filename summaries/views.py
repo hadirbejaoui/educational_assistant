@@ -8,6 +8,7 @@ from django.views.decorators.http import require_POST
 
 from core.pagination import paginate
 from core.ratelimit import rate_limit
+from core.permissions import user_documents
 from courses.models import CourseDocument
 
 from .models import Summary
@@ -17,22 +18,19 @@ from .services.summarization import generate_summary
 logger = logging.getLogger(__name__)
 
 
-def _user_documents(user):
-    return CourseDocument.objects.filter(owner=user)
-
-
 @login_required
 def summary_list(request):
     summaries = paginate(
         request,
-        Summary.objects.filter(document__owner=request.user).select_related("document"),
+        Summary.objects.filter(document__in=user_documents(request.user))
+        .select_related("document"),
     )
     return render(request, "summaries/summary_list.html", {"summaries": summaries})
 
 
 @login_required
 def document_summaries(request, pk):
-    document = get_object_or_404(_user_documents(request.user), pk=pk)
+    document = get_object_or_404(user_documents(request.user), pk=pk)
     existing = {s.level: s for s in document.summaries.all()}
     levels = [
         {"value": value, "label": label, "summary": existing.get(value)}
@@ -51,7 +49,7 @@ def document_summaries(request, pk):
 def summary_generate(request, pk, level):
     if level not in Summary.Level.values:
         raise Http404("Niveau inconnu.")
-    document = get_object_or_404(_user_documents(request.user), pk=pk)
+    document = get_object_or_404(user_documents(request.user), pk=pk)
 
     if document.status != CourseDocument.Status.READY:
         messages.error(request, "Le document n'est pas encore prêt pour être résumé.")

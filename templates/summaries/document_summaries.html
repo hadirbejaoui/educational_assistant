@@ -25,9 +25,10 @@
                 <p class="meta">
                     <span class="meta__item">{% include "includes/icon.html" with name="clock" %}{{ item.summary.updated_at|date:"d/m/Y H:i" }}</span>
                     <span>{{ item.summary.provider }}</span>
+                    <span>{{ item.summary.content|wordcount }} mots</span>
                     <span>{{ item.summary.section_count }} section(s)</span>
                 </p>
-                <div class="summary-text mt-4">{{ item.summary.content|linebreaks }}</div>
+                <div class="summary-text mt-4">{{ item.summary.content|rich_text }}</div>
             {% else %}
                 <p class="text-muted">Pas encore généré.</p>
             {% endif %}

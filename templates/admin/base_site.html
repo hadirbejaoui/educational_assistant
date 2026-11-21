@@ -1,0 +1,40 @@
+{% extends "admin/base.html" %}
+{% load i18n ui %}
+{% comment %}
+Habillage de l'admin Django aux couleurs de l'application (static/css/admin.css).
+On ne réécrit que l'en-tête et les liens utilisateur ; listes, formulaires et
+actions restent ceux de Django. Aucun style ni script inline (CSP stricte).
+L'application n'a pas de thème sombre : celui de l'admin est désactivé pour
+garder une interface cohérente.
+{% endcomment %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | {{ site_title }}{% endblock %}
+
+{% block dark-mode-vars %}{% endblock %}
+
+{% block extrastyle %}
+<link rel="stylesheet" href="{% asset 'css/tokens.css' %}">
+<link rel="stylesheet" href="{% asset 'css/admin.css' %}">
+{% endblock %}
+
+{% block branding %}
+<a class="admin-brand" href="{% url 'admin:index' %}">
+    <span class="admin-brand__logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M22 9 12 4 2 9l10 5 10-5Z"/><path d="M6 11v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/></svg>
+    </span>
+    <span class="admin-brand__text">
+        <span class="admin-brand__name">{{ site_header }}</span>
+        <span class="admin-brand__badge">Administration</span>
+    </span>
+</a>
+{% endblock %}
+
+{% block welcome-msg %}
+<span class="admin-user">{% firstof user.get_short_name user.get_username %}</span>
+{% endblock %}
+
+{% block userlinks %}{% include "admin/app_userlinks.html" %}{% endblock %}
+
+{% block nav-global %}{% endblock %}
+
+{% block footer %}<p class="admin-footer">Assistant pédagogique · espace d'administration réservé aux comptes « Statut équipe »</p>{% endblock %}

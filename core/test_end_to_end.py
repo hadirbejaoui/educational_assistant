@@ -48,6 +48,8 @@ class QuizLLM(FakeLLM):
         return QUIZ_JSON
 
 
+# L'import indexe le cours : faux modèle d'embeddings (ni téléchargement ni calcul réel)
+@patch("courses.views.get_embedder", new=FakeEmbedder)
 @override_settings(
     MEDIA_ROOT=TEMP_MEDIA, RAG_MIN_SCORE=0.05, RAG_SCORE_WINDOW=1.0, SUMMARY_PROVIDER="extractive",
     RATE_LIMITS={"chat": (0, 60), "quiz": (0, 60), "summary": (0, 60)},

@@ -143,6 +143,19 @@ class ClientFormatTests(SimpleTestCase):
         self.assertEqual(payload["options"]["num_ctx"], 4096)
         self.assertTrue(payload["messages"][-1]["content"].endswith("/no_think"))
 
+    def test_ollama_instruct_variant_gets_no_thinking_switch(self):
+        client = OllamaClient(model_name="qwen3:4b-instruct")
+        with patch.object(client, "_post", return_value={"message": {"content": "Réponse"}}) as post:
+            self.assertEqual(client.generate("Q"), "Réponse")
+        payload = post.call_args.kwargs["payload"]
+        self.assertNotIn("think", payload)
+        self.assertEqual(payload["messages"][-1]["content"], "Q")
+
+    @override_settings(LLM_PROVIDER="ollama", LLM_MODEL="qwen3:4b")
+    def test_model_can_be_overridden_for_one_use(self):
+        self.assertEqual(get_llm_client().model_name, "qwen3:4b")
+        self.assertEqual(get_llm_client(model="qwen3:4b-instruct").model_name, "qwen3:4b-instruct")
+
     def test_ollama_unexpected_answer(self):
         client = OllamaClient(model_name="qwen3:4b")
         with patch.object(client, "_post", return_value={"rien": 1}):

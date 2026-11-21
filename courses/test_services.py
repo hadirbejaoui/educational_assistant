@@ -1,5 +1,6 @@
 import shutil
 import tempfile
+from unittest.mock import patch
 
 import pymupdf
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -13,6 +14,7 @@ from .services.chunking import chunk_pages
 from .services.cleaning import clean_text
 from .services.data import PageData
 from .services.processing import process_document
+from .test_embeddings import FakeEmbedder
 
 PASSWORD = "Str0ng-Pass!2026"
 TEMP_MEDIA = tempfile.mkdtemp()
@@ -148,6 +150,8 @@ class ProcessingTests(TestCase):
         self.assertEqual(DocumentChunk.objects.count(), 0)
 
 
+# L'import indexe le cours : faux modèle d'embeddings (ni téléchargement ni calcul réel)
+@patch("courses.views.get_embedder", new=FakeEmbedder)
 @override_settings(MEDIA_ROOT=TEMP_MEDIA)
 class ProcessingViewTests(TestCase):
     def setUp(self):
@@ -161,6 +165,7 @@ class ProcessingViewTests(TestCase):
         doc = CourseDocument.objects.get(title="Cours")
         self.assertEqual(doc.status, "ready")
         self.assertTrue(doc.chunks.exists())
+        self.assertFalse(doc.chunks.filter(embedding__isnull=True).exists())  # indexé dès l'import
 
     def test_reprocess_requires_post(self):
         doc = CourseDocument.objects.create(

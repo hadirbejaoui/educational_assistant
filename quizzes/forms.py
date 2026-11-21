@@ -2,6 +2,7 @@ from django import forms
 from django.conf import settings
 
 from accounts.forms import StyledFormMixin
+from core.permissions import user_documents
 from courses.models import CourseDocument
 
 from .models import Quiz
@@ -16,9 +17,9 @@ class QuizCreateForm(StyledFormMixin, forms.Form):
 
     def __init__(self, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Seuls les documents prêts de l'utilisateur sont proposés
-        self.fields["document"].queryset = CourseDocument.objects.filter(
-            owner=user, status=CourseDocument.Status.READY
+        # Seuls les cours prêts de l'utilisateur sont proposés (un autre identifiant est refusé)
+        self.fields["document"].queryset = user_documents(user).filter(
+            status=CourseDocument.Status.READY
         )
         self.fields["count"].max_value = settings.QUIZ_MAX_QUESTIONS
         self.fields["count"].widget.attrs["max"] = settings.QUIZ_MAX_QUESTIONS

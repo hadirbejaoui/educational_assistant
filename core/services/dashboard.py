@@ -1,6 +1,6 @@
 """Données du tableau de bord.
 
-Chaque requête part d'un filtre sur le propriétaire du document : un étudiant
+Chaque requête part des cours de l'utilisateur ou de son identifiant : un compte
 ne voit jamais les données d'un autre. Les views n'ont qu'à appeler
 `dashboard_data(request.user)`.
 """
@@ -8,7 +8,7 @@ ne voit jamais les données d'un autre. Les views n'ont qu'à appeler
 from django.db.models import Avg, F, FloatField, ExpressionWrapper
 
 from chatbot.models import Conversation
-from courses.models import CourseDocument
+from core.permissions import user_documents
 from quizzes.models import Quiz, QuizAttempt
 from summaries.models import Summary
 
@@ -18,17 +18,17 @@ RECENT_ITEMS = 5
 def user_counts(user):
     """Compteurs principaux de l'utilisateur."""
     return {
-        "documents": CourseDocument.objects.filter(owner=user).count(),
-        "summaries": Summary.objects.filter(document__owner=user).count(),
-        "quizzes": Quiz.objects.filter(document__owner=user).count(),
-        "conversations": Conversation.objects.filter(document__owner=user).count(),
+        "documents": user_documents(user).count(),
+        "summaries": Summary.objects.filter(document__in=user_documents(user)).count(),
+        "quizzes": Quiz.objects.filter(owner=user).count(),
+        "conversations": Conversation.objects.filter(owner=user).count(),
     }
 
 
 def completed_attempts(user):
     """Tentatives terminées de l'utilisateur, les plus récentes d'abord."""
     return QuizAttempt.objects.filter(
-        quiz__document__owner=user, completed_at__isnull=False
+        user=user, completed_at__isnull=False
     ).select_related("quiz", "quiz__document")
 
 
@@ -48,8 +48,8 @@ def dashboard_data(user, recent=RECENT_ITEMS):
         "counts": user_counts(user),
         "average_grade": average_grade(user),
         "recent_attempts": list(completed_attempts(user)[:recent]),
-        "recent_documents": list(CourseDocument.objects.filter(owner=user)[:recent]),
+        "recent_documents": list(user_documents(user)[:recent]),
         "recent_conversations": list(
-            Conversation.objects.filter(document__owner=user).select_related("document")[:recent]
+            Conversation.objects.filter(owner=user).select_related("document")[:recent]
         ),
     }

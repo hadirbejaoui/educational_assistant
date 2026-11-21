@@ -18,8 +18,6 @@ Définitions pour la relecture :
 - erreur  : rempli automatiquement quand le LLM a échoué (délai dépassé...).
 """
 
-import csv
-import io
 import random
 import time
 from types import SimpleNamespace
@@ -31,7 +29,7 @@ from chatbot.models import ChatMessage
 from chatbot.services.rag import answer_question
 from courses.models import CourseDocument
 from courses.services.embeddings import EmbeddingError, get_embedder
-from courses.services.evaluation import load_course_questions, wilson_interval
+from courses.services.evaluation import load_course_questions, read_sheet, wilson_interval, write_sheet
 from llm import LLMError, get_llm_client
 
 COLUMNS = ["id", "cours", "question", "reponse", "sources_citees", "secondes", "modele", "appuyee", "commentaire"]
@@ -100,10 +98,7 @@ class Command(BaseCommand):
             self.stdout.write(f"{number}/{len(pool)} : {elapsed:.0f} s {'(refus)' if not answer.grounded else ''}")
 
         # Point-virgule et BOM UTF-8 : le CSV s'ouvre correctement dans Excel en français
-        with open(options["out"], "w", encoding="utf-8-sig", newline="") as handle:
-            writer = csv.DictWriter(handle, fieldnames=COLUMNS, delimiter=";")
-            writer.writeheader()
-            writer.writerows(rows)
+        write_sheet(options["out"], COLUMNS, rows)
         times = [float(r["secondes"]) for r in rows]
         self.stdout.write(f"Grille écrite : {options['out']}")
         if times:
@@ -111,26 +106,9 @@ class Command(BaseCommand):
         self.stdout.write("Remplissez la colonne « appuyee » (oui / partiel / non), puis : "
                           f"python manage.py rag_faithfulness --score {options['out']}")
 
-    @staticmethod
-    def _read_sheet(path):
-        """Lit la grille quel que soit le format choisi dans Excel à l'enregistrement :
-        « CSV UTF-8 » (UTF-8, ;) ou « CSV (séparateur : point-virgule) » (Windows-1252, ;),
-        ou un CSV séparé par des virgules."""
-        with open(path, "rb") as handle:
-            raw = handle.read()
-        for encoding in ("utf-8-sig", "cp1252"):
-            try:
-                text = raw.decode(encoding)
-                break
-            except UnicodeDecodeError:
-                continue
-        first_line = text.split("\n", 1)[0]
-        delimiter = ";" if first_line.count(";") >= first_line.count(",") else ","
-        return list(csv.DictReader(io.StringIO(text, newline=""), delimiter=delimiter))
-
     def _score(self, path):
         try:
-            rows = self._read_sheet(path)
+            rows = read_sheet(path)
         except OSError as exc:
             raise CommandError(str(exc))
         if rows and "appuyee" not in rows[0]:

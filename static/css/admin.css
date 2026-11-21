@@ -1,0 +1,295 @@
+/* =====================================================================
+   admin.css - l'admin Django aux couleurs de l'application
+   ---------------------------------------------------------------------
+   Chargé après les feuilles de l'admin (templates/admin/base_site.html),
+   avec tokens.css : aucune valeur en dur, uniquement les jetons du design
+   system. 1) on redéfinit les variables CSS de l'admin ; 2) on ajuste les
+   composants dont l'aspect ne dépend pas de ces variables.
+   ===================================================================== */
+
+/* --- 1. Variables de l'admin -> jetons de l'application --- */
+:root {
+    --primary: var(--color-accent);
+    --secondary: var(--color-accent);
+    --accent: var(--color-accent);
+    --primary-fg: var(--color-on-accent);
+
+    --body-fg: var(--color-text);
+    --body-bg: var(--color-bg);
+    --body-quiet-color: var(--color-text-subtle);
+    --body-medium-color: var(--color-text-muted);
+    --body-loud-color: var(--color-text);
+
+    --header-color: var(--color-text);
+    --header-branding-color: var(--color-text);
+    --header-bg: var(--color-surface);
+    --header-link-color: var(--color-text-muted);
+
+    --breadcrumbs-fg: var(--color-text-subtle);
+    --breadcrumbs-link-fg: var(--color-accent);
+    --breadcrumbs-bg: var(--color-surface-muted);
+
+    --link-fg: var(--color-accent);
+    --link-hover-color: var(--color-accent-hover);
+    --link-selected-fg: var(--color-accent-hover);
+
+    --hairline-color: var(--color-border);
+    --border-color: var(--color-border-strong);
+
+    --error-fg: var(--color-danger);
+    --message-success-bg: var(--color-success-soft);
+    --message-warning-bg: var(--color-warning-soft);
+    --message-error-bg: var(--color-danger-soft);
+
+    --darkened-bg: var(--color-surface-muted);
+    --selected-bg: var(--color-accent-soft);
+    --selected-row: var(--color-accent-soft);
+
+    --button-fg: var(--color-on-accent);
+    --button-bg: var(--color-accent);
+    --button-hover-bg: var(--color-accent-hover);
+    --default-button-bg: var(--color-accent);
+    --default-button-hover-bg: var(--color-accent-hover);
+    --close-button-bg: var(--color-text-subtle);
+    --close-button-hover-bg: var(--color-text-muted);
+    --delete-button-bg: var(--color-danger);
+    --delete-button-hover-bg: var(--color-danger-hover);
+
+    --object-tools-fg: var(--color-on-accent);
+    --object-tools-bg: var(--color-accent);
+    --object-tools-hover-bg: var(--color-accent-hover);
+
+    --font-family-primary: var(--font-sans);
+    --font-family-monospace: var(--font-mono);
+}
+
+body { font-size: var(--text-sm); }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+}
+
+/* --- 2. En-tête : barre blanche, logo et nom de l'application --- */
+#header {
+    padding: var(--space-3) var(--space-6);
+    border-bottom: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+    gap: var(--space-4);
+}
+#branding { display: flex; align-items: center; }
+.admin-brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    color: var(--color-text);
+    text-decoration: none;
+}
+.admin-brand:hover, .admin-brand:focus { color: var(--color-text); text-decoration: none; }
+.admin-brand__logo {
+    display: inline-grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border-radius: var(--radius-md);
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+}
+.admin-brand__logo svg { width: 22px; height: 22px; }
+.admin-brand__text { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.admin-brand__name { font-size: var(--text-lg); font-weight: var(--weight-bold); }
+.admin-brand__badge {
+    padding: 2px var(--space-2);
+    border: 1px solid var(--color-accent-border);
+    border-radius: var(--radius-full);
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+}
+
+#user-tools {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    font-size: var(--text-sm);
+    text-transform: none;
+    letter-spacing: normal;
+}
+.admin-user { font-weight: var(--weight-semibold); color: var(--color-text); }
+#user-tools a.admin-link { border-bottom: none; color: var(--color-text-muted); text-decoration: none; }
+#user-tools a.admin-link:hover { color: var(--color-accent); }
+#user-tools a.admin-link--current { color: var(--color-accent); font-weight: var(--weight-semibold); }
+#logout-form { display: inline; }
+#user-tools #logout-form button.admin-logout {
+    height: var(--control-height-sm);
+    padding: 0 var(--space-3);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
+    font-weight: var(--weight-medium);
+    text-decoration: none;
+    cursor: pointer;
+}
+#user-tools #logout-form button.admin-logout:hover { background: var(--color-surface-hover); }
+
+/* --- Fil d'Ariane --- */
+div.breadcrumbs {
+    padding: var(--space-3) var(--space-6);
+    border-bottom: 1px solid var(--color-border);
+    font-size: var(--text-sm);
+}
+div.breadcrumbs a:hover { color: var(--color-accent-hover); }
+
+/* --- Contenu --- */
+#content { padding: var(--space-6); }
+#content h1 {
+    margin-bottom: var(--space-6);
+    color: var(--color-text);
+    font-size: var(--text-2xl);
+    font-weight: var(--weight-bold);
+}
+#content h2 { color: var(--color-text); }
+
+/* Blocs (accueil, formulaires, filtres) : des cartes, comme dans l'application */
+.module, #changelist-filter, .inline-group {
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-md);
+}
+#content-main .module, #content-related .module { margin-bottom: var(--space-6); }
+.module h2, .module caption, .inline-group h2 {
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-surface-muted);
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.module h2 a, .module caption a { color: var(--color-text); }
+.module h2 a:hover, .module caption a:hover { color: var(--color-accent); }
+
+/* --- Tableaux --- */
+table { border-color: var(--color-border); }
+thead th, tfoot td {
+    background: var(--color-surface-muted);
+    color: var(--color-text-muted);
+    border-bottom: 1px solid var(--color-border);
+    font-weight: var(--weight-semibold);
+}
+td, th { padding: var(--space-3) var(--space-4); border-bottom-color: var(--color-border); vertical-align: middle; }
+#changelist table tbody tr:hover td, #changelist table tbody tr:hover th { background: var(--color-surface-hover); }
+#changelist .results { border-radius: var(--radius-lg); }
+#changelist table thead th.sorted { background: var(--color-accent-soft); }
+
+/* --- Boutons et liens d'action --- */
+.button, input[type=submit], input[type=button], .submit-row input, a.button, .object-tools a {
+    min-height: var(--control-height-sm);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-md);
+    font-weight: var(--weight-semibold);
+    transition: background var(--transition-fast);
+}
+.submit-row {
+    padding: var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    gap: var(--space-3);
+}
+.submit-row a.deletelink, .delete-confirmation form input[type="submit"] {
+    border-radius: var(--radius-md);
+}
+.object-tools a { border-radius: var(--radius-full); }
+.addlink, .changelink, .viewlink { color: var(--color-accent); }
+
+/* --- Champs de formulaire --- */
+input[type=text], input[type=password], input[type=email], input[type=url], input[type=number],
+input[type=tel], input[type=search], textarea, select, .vTextField {
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    color: var(--color-text);
+    transition: border-color var(--transition-fast);
+}
+input:focus, textarea:focus, select:focus { border-color: var(--color-accent); }
+fieldset .form-row { padding: var(--space-4); border-bottom-color: var(--color-border); }
+.aligned label, form .aligned p.help, form .aligned div.help { color: var(--color-text-muted); }
+.help, p.help, div.help { color: var(--color-text-subtle); }
+
+/* --- Formulaires « larges » (changement de mot de passe) --- */
+#content-main > form > div > p:not([class]) { max-width: 72ch; color: var(--color-text-muted); }  /* intro, pas .errornote */
+fieldset.module.aligned.wide { margin-bottom: var(--space-6); }
+.aligned.wide .flex-container { align-items: center; gap: var(--space-3); }
+.aligned.wide label { color: var(--color-text); font-weight: var(--weight-medium); }
+.aligned.wide input[type=password] { width: 100%; max-width: 22rem; height: var(--control-height); }
+.aligned .help ul {
+    margin: var(--space-2) 0 0;
+    padding-left: var(--space-5);
+    list-style: disc;
+}
+.aligned .help li { margin-bottom: var(--space-1); list-style: disc; color: var(--color-text-subtle); }
+.submit-row input.default { height: var(--control-height); padding: 0 var(--space-6); }
+
+/* --- Messages et erreurs --- */
+ul.messagelist li {
+    margin: 0 0 var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--color-success-border);
+    border-radius: var(--radius-md);
+    background-image: none;
+    color: var(--color-success);
+}
+ul.messagelist li.warning { border-color: var(--color-warning-border); color: var(--color-warning); }
+ul.messagelist li.error { border-color: var(--color-danger-border); color: var(--color-danger); }
+.errornote {
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--color-danger-border);
+    border-radius: var(--radius-md);
+    background: var(--color-danger-soft);
+    color: var(--color-danger);
+}
+
+/* --- Barre latérale des modèles --- */
+#nav-sidebar { border-right: 1px solid var(--color-border); background: var(--color-surface); }
+#nav-sidebar .module { border: none; border-radius: 0; box-shadow: none; }
+#nav-sidebar .current-model { background: var(--color-accent-soft); }
+#nav-sidebar .current-model a { color: var(--color-accent); font-weight: var(--weight-semibold); }
+.toggle-nav-sidebar { border-right-color: var(--color-border); background: var(--color-surface-muted); color: var(--color-text-muted); }
+
+/* --- Filtres, recherche, pagination --- */
+#changelist-filter h2 { border-radius: 0; }
+#changelist-filter li.selected a { color: var(--color-accent); font-weight: var(--weight-semibold); }
+#changelist #toolbar { padding: var(--space-3) var(--space-4); background: var(--color-surface-muted); border-radius: var(--radius-md); }
+.paginator { padding: var(--space-3) var(--space-4); border-top-color: var(--color-border); color: var(--color-text-muted); }
+.paginator .this-page { color: var(--color-accent); font-weight: var(--weight-bold); }
+
+/* --- Page de connexion : une carte centrée --- */
+.login { background: var(--color-bg); }
+.login #container {
+    margin-top: var(--space-12);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+}
+.login #header { justify-content: center; padding: var(--space-6); box-shadow: none; }
+.login #content { padding: var(--space-6); }
+.login .submit-row { padding: 0; border: none; background: none; }
+.login .submit-row input { width: 100%; height: var(--control-height); }
+
+/* --- Pied de page --- */
+.admin-footer {
+    margin: 0;
+    padding: var(--space-4) var(--space-6);
+    color: var(--color-text-subtle);
+    font-size: var(--text-xs);
+    text-align: center;
+}

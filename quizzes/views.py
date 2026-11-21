@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 def _user_quizzes(user):
-    return Quiz.objects.filter(document__owner=user)
+    return Quiz.objects.filter(owner=user)
 
 
 @login_required
@@ -30,6 +30,7 @@ def quiz_list(request):
         _user_quizzes(request.user)
         .select_related("document")
         .annotate(question_count=Count("questions"))
+        .order_by("-created_at")  # un GROUP BY ignore Meta.ordering : ordre explicite pour la pagination
     )
     return render(request, "quizzes/quiz_list.html", {"quizzes": paginate(request, quizzes)})
 
@@ -105,7 +106,7 @@ def quiz_take(request, pk):
 @login_required
 def attempt_result(request, pk):
     attempt = get_object_or_404(
-        QuizAttempt.objects.filter(quiz__document__owner=request.user).select_related("quiz"),
+        QuizAttempt.objects.filter(user=request.user).select_related("quiz"),
         pk=pk,
     )
     answers = attempt.answers.select_related("question", "selected_choice").prefetch_related(

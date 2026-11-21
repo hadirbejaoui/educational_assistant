@@ -1,0 +1,13 @@
+{% load i18n %}{% comment %}
+Liens de l'en-tête de l'admin (base_site.html et pages du mot de passe, qui
+redéfinissent ce bloc chez Django). Pas de bouton de thème : le thème sombre
+de l'admin est désactivé, comme dans l'application.
+{% endcomment %}
+<a class="admin-link" href="{% url 'dashboard' %}">Retour à l'application</a>
+{% if user.has_usable_password %}
+<a class="admin-link{% if current == 'password' %} admin-link--current{% endif %}" href="{% url 'admin:password_change' %}"{% if current == 'password' %} aria-current="page"{% endif %}>{% translate 'Change password' %}</a>
+{% endif %}
+<form id="logout-form" method="post" action="{% url 'admin:logout' %}">
+    {% csrf_token %}
+    <button type="submit" class="admin-logout">{% translate 'Log out' %}</button>
+</form>

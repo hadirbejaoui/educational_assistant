@@ -30,16 +30,20 @@ class OllamaClient(BaseLLMClient):
         if system:
             messages.append({"role": "system", "content": system})
         messages.append({"role": "user", "content": prompt})
-        if self.model_name.lower().startswith("qwen3"):
+        # Les variantes « instruct » de Qwen3 ne raisonnent jamais : aucun interrupteur à envoyer.
+        # Les autres (dont la variante « thinking ») reçoivent think=false et « /no_think ».
+        instruct = "instruct" in self.model_name.lower()
+        if self.model_name.lower().startswith("qwen3") and not instruct:
             messages[-1]["content"] += " /no_think"  # interrupteur propre à Qwen3
 
         payload = {
             "model": self.model_name,
             "messages": messages,
             "stream": False,
-            "think": False,
             "options": {"temperature": temperature, "num_ctx": self.num_ctx},
         }
+        if not instruct:
+            payload["think"] = False
         if json_mode:
             payload["format"] = "json"
 
