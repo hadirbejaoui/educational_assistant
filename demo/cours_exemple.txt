@@ -1,0 +1,27 @@
+Chapitre 1 - La recherche d'information
+
+La recherche d'information consiste à retrouver, dans une collection de documents, ceux qui répondent à un besoin exprimé par une requête. Un moteur de recherche découpe d'abord les documents en unités plus petites, appelées passages, puis construit un index qui permet de les retrouver rapidement.
+
+Le modèle classique repose sur les mots. Chaque passage est représenté par les termes qu'il contient, et la pertinence d'un passage pour une requête dépend des termes qu'ils ont en commun. Un terme fréquent dans un passage mais rare dans la collection est un bon indice de pertinence : c'est l'idée de la pondération TF-IDF.
+
+L'algorithme BM25 améliore TF-IDF de deux façons. D'abord, l'effet de la fréquence d'un terme sature : répéter un mot dix fois ne rend pas un passage dix fois plus pertinent. Ensuite, la longueur du passage est normalisée, pour ne pas favoriser les passages très longs. BM25 utilise deux paramètres, k1 et b, souvent fixés à 1,5 et 0,75.
+
+Chapitre 2 - Les représentations vectorielles
+
+Les méthodes lexicales échouent lorsque la requête et le passage utilisent des mots différents pour dire la même chose. Par exemple, la requête « voiture électrique » ne retrouve pas un passage qui parle de « véhicule à batterie ».
+
+Les embeddings résolvent ce problème. Un embedding est un vecteur de nombres réels qui représente le sens d'un texte. Il est calculé par un réseau de neurones entraîné pour que deux textes de sens proche aient des vecteurs proches. La proximité entre deux vecteurs se mesure le plus souvent par la similarité cosinus, qui vaut 1 pour deux vecteurs de même direction.
+
+Pour retrouver rapidement les vecteurs les plus proches d'une requête parmi des millions, on utilise des index de recherche approximative, comme HNSW, qui organisent les vecteurs en un graphe à plusieurs niveaux.
+
+La recherche hybride combine les deux approches : elle additionne les classements obtenus par BM25 et par les embeddings. La méthode Reciprocal Rank Fusion attribue à chaque passage la somme des inverses de ses rangs, décalés d'une constante égale à 60.
+
+Chapitre 3 - La génération augmentée par récupération
+
+Un grand modèle de langue peut répondre à des questions, mais il ne connaît pas les documents d'un cours particulier et il peut inventer des informations : on parle d'hallucination.
+
+La génération augmentée par récupération, ou RAG, limite ce problème en trois étapes. Premièrement, le système recherche les passages les plus pertinents pour la question. Deuxièmement, il place ces passages dans le prompt du modèle, avec la consigne de ne répondre qu'à partir de ce contexte. Troisièmement, le modèle génère une réponse qui cite les passages utilisés.
+
+Un système RAG doit aussi savoir refuser. Si aucun passage n'est assez proche de la question, il est préférable de répondre que l'information ne figure pas dans le cours plutôt que de laisser le modèle improviser.
+
+On évalue un système RAG à deux niveaux. La recherche se mesure par le rappel et par le rang moyen réciproque, ou MRR, qui vaut 1 lorsque le bon passage est toujours classé premier. La génération se mesure par la fidélité, qui vérifie que la réponse est appuyée par les passages cités, et par la pertinence de la réponse par rapport à la question.

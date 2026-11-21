@@ -19,17 +19,17 @@ Légende : ✅ fait et vérifié · ⚠️ fait partiellement · ❌ à faire
 
 | Livrable | État | Remarque |
 |---|---|---|
-| Rapport PDF détaillé | ❌ | À rédiger : problème, pipeline, choix techniques, architecture avec schémas, résultats, exemples de conversations, limites, lien GitHub. La matière existe (README, ce bilan, sorties des commandes d'évaluation). |
-| Code source sur GitHub, organisé et commenté | ⚠️ | Code poussé, 11 phases commitées, docstrings en français. **Le dépôt s'appelle `educational_assistant.` (point final)** : à renommer avant de donner le lien. |
+| Rapport PDF détaillé | ✅ | Rédigé (4 chapitres, diagrammes UML, captures d'écran, résultats mesurés, limites, lien GitHub) ; remis séparément, il n'est pas versionné dans le dépôt. |
+| Code source sur GitHub, organisé et commenté | ✅ | Applications Django séparées, logique dans `services/`, docstrings en français. **Le dépôt s'appelle `educational_assistant.` (point final)** : à renommer avant de donner le lien. |
 | README : prérequis, installation, exécution | ✅ | `README.md` : Windows pas à pas, pgvector, Ollama, variables, commandes, tests |
-| Script ou notebook de démonstration | ⚠️ | Facultatif. Le parcours de démonstration est décrit (section 7 ci-dessous) mais il n'existe pas de script dédié. |
+| Script ou notebook de démonstration | ✅ | `python manage.py demo` (avec ou sans LLM) : import, indexation, recherche, trois résumés, QCM, chatbot sur `demo/cours_exemple.txt`, puis nettoyage ; testé (`core/test_demo.py`). |
 
 ## 3. Fonctionnalités attendues (section 6.3)
 
 | Fonctionnalité | État | Preuve |
 |---|---|---|
 | Téléversement PDF et texte | ✅ | Glisser-déposer, validation navigateur + serveur (extension, taille, signature `%PDF-`) ; test de bout en bout avec un vrai PDF |
-| Résumé court, moyen, détaillé | ✅ | `summaries/` : trois niveaux, résumé hiérarchique par sections (map → reduce) ; tests `summaries/tests.py` |
+| Résumé court, moyen, détaillé | ✅ | `summaries/` : longueur proportionnelle au cours (`SUMMARY_LEVELS`), consignes propres à chaque niveau, map-reduce, sections plus courtes pour le détaillé ; tests sur cours courts et longs |
 | QCM avec réponses attendues | ✅ | 4 choix, une seule bonne réponse garantie par la base, explication de la réponse ; correction notée sur 20 |
 | Niveau de difficulté adaptable | ✅ | Facile, moyen, difficile (consignes différentes dans le prompt) |
 | Chatbot questions-réponses avec citations de passages | ✅ | Passages numérotés [1], [2], pages et extraits affichés ; citations inventées retirées |
@@ -42,7 +42,7 @@ Légende : ✅ fait et vérifié · ⚠️ fait partiellement · ❌ à faire
 | Segmentation par sections | ✅ | Chapitres détectés (sommaire du PDF ou titres « Chapitre 3 »), titres gardés avec leur contenu, coupure sur fins de phrase, chevauchement de 100 caractères |
 | Gestion des figures et équations | ⚠️ | Équations : symboles, exposants et indices conservés (`10³`, `σ²`, `P(A∩B)`). Figures : non traitées (pas d'OCR ni de description d'image). |
 | Embeddings pour documents longs (mémoire, temps) | ✅ | `multilingual-e5-small` (384 dim., CPU), calcul par lots, index HNSW, seuls les passages non indexés sont recalculés |
-| Modèle spécialisé pour la summarization (T5, BART, GPT, Llama…) | ⚠️ | Le fournisseur mT5 (`csebuetnlp/mT5_multilingual_XLSum`) est codé (`summaries/services/providers/huggingface.py`) mais **jamais exécuté sur cette machine** (modèle non téléchargé, non testé). Tous les résumés existants sont **extractifs** (sélection de phrases du cours). |
+| Modèle spécialisé pour la summarization (T5, BART, GPT, Llama…) | ✅ | Résumés abstractifs par LLM (`qwen3:4b-instruct`, génération contrôlée). mT5 (`csebuetnlp/mT5_multilingual_XLSum`) et l'extractif restent disponibles et comparables (`compare_summaries`). La comparaison citée dans le code (`evaluation/exemples/comparaison_resumes.md`) n'est pas présente dans le dépôt : à régénérer. |
 | LLM pour les quiz et les réponses | ✅ | Qwen3 4B (Ollama) ; JSON des quiz validé, complément si des questions manquent |
 | Interface web conviviale | ✅ | Django Templates + CSS + JS classique (Streamlit ou Gradio n'étaient que des exemples) : tableau de bord, quiz question par question, chat avec minuteur, responsive et accessible |
 
@@ -50,9 +50,9 @@ Légende : ✅ fait et vérifié · ⚠️ fait partiellement · ❌ à faire
 
 | Livrable | État | Remarque |
 |---|---|---|
-| Exemples de résumés pour différents documents | ❌ | Des résumés existent dans la base (3 cours), mais ils ne sont pas exportés pour le rapport et sont tous extractifs. |
-| Exemples de quiz générés avec correction | ❌ | 5 quiz existent dans la base, non exportés pour le rapport. |
-| Évaluation qualitative des résumés et des quiz | ❌ | Seule la fidélité du **chatbot** est évaluée (`rag_faithfulness`). Il manque une grille de relecture pour les résumés (fidélité, concision, clarté) et pour les quiz (cohérence, pertinence). |
+| Exemples de résumés pour différents documents | ✅ | Trois niveaux générés sur deux cours réels (TALN, droit des sociétés), reproduits dans le rapport ; `export_examples` exporte ceux de la base. |
+| Exemples de quiz générés avec correction | ✅ | Quiz réels (Big Data, ASP.NET, droit…) avec bonne réponse et explication dans le rapport ; `export_examples` produit `quiz.md`. |
+| Évaluation qualitative des résumés et des quiz | ⚠️ | Grilles prêtes (`export_examples` : fidélité, concision, clarté ; cohérence, pertinence, niveau) mais **non remplies**. Observations qualitatives et corrections décrites dans le rapport. |
 
 ## 6. Critères d'évaluation (sections 4 et 6.7)
 
@@ -60,11 +60,11 @@ Légende : ✅ fait et vérifié · ⚠️ fait partiellement · ❌ à faire
 |---|---|
 | Qualité technique du pipeline | Recherche hybride évaluée : passage attendu dans les 3 premiers pour 23 questions sur 23 (MRR 0,957), refus hors cours 8/8 |
 | Pertinence et robustesse du chatbot | 6 réponses relues : 5 appuyées par leurs sources, 1 partiellement (à confirmer par la relecture de l'étudiante) ; marge du seuil de refus faible (0,010) |
-| Qualité du code | 308 tests, 93 % de couverture, services séparés des vues, docstrings |
-| Qualité du rapport PDF | ❌ à rédiger |
-| Qualité du dépôt GitHub | README complet ; renommage du dépôt à faire |
-| Originalité et extensions | Évaluation chiffrée avec intervalles de confiance, recherche hybride, sécurité (CSP, limitation de fréquence, anti-injection), tableau de bord et historique des notes, interface accessible |
-| Qualité des résumés (fidélité, concision, clarté) | ⚠️ non évaluée ; extractif uniquement |
+| Qualité du code | 368 tests, 95 % de couverture, services séparés des vues, docstrings |
+| Qualité du rapport PDF | ✅ rédigé (évaluations humaines signalées « À réaliser ») |
+| Qualité du dépôt GitHub | README complet (démarrage rapide, installation, démonstration) ; renommage du dépôt à faire |
+| Originalité et extensions | Évaluation chiffrée avec intervalles de confiance, recherche hybride, sécurité (CSP, limitation de fréquence, anti-injection), espaces privés par compte testés, tableau de bord et historique des notes, interface accessible, administration personnalisée |
+| Qualité des résumés (fidélité, concision, clarté) | ⚠️ non notée par des humains ; ROUGE non calculé (pas de résumé de référence) |
 | Cohérence et pertinence des quiz | ⚠️ non évaluée formellement |
 | Facilité d'utilisation pour un étudiant | ✅ interface vérifiée à 360, 768 et 1280 px |
 
@@ -72,25 +72,29 @@ Légende : ✅ fait et vérifié · ⚠️ fait partiellement · ❌ à faire
 
 | Mesure | Résultat |
 |---|---|
-| Tests automatiques | 308, tous au vert ; couverture 93 % |
+| Tests automatiques | 368, tous au vert ; couverture 95 % |
 | Recherche : passage attendu dans les 3 premiers | 100 % (23/23) |
 | Refus à tort / acceptation à tort (seuil 0,83) | 0/23 [IC95 0-14 %] / 0/8 [IC95 0-32 %] |
-| Temps de recherche | ≈ 10 ms |
-| Temps de réponse du chatbot (Qwen3 4B, RTX 2050) | 72,9 s en moyenne, 102 s au maximum |
+| Temps de recherche hybride | ≈ 0,1 s par question |
+| Temps de réponse du chatbot (Qwen3 4B, RTX 2050) | 72,9 s en moyenne sur 6 questions (38 à 102 s) ; jusqu'à 224 s sous charge |
+| Durée d'un résumé (qwen3:4b-instruct) | 1 à 6 min selon le niveau et la taille du cours |
 
 ## 8. Limites connues
 
 1. **Chatbot lent** : la variante « thinking » de Qwen3 raisonne avant de répondre
-   (≈ 1 min). La variante instruct serait plus rapide ; non retenue.
+   (≈ 1 min) ; la variante instruct, plus rapide, est réservée aux résumés.
 2. **Petit échantillon d'évaluation** : 23 questions et 8 hors cours ; marge du seuil
    faible (0,010).
-3. **Résumés extractifs** : fidèles par construction (phrases du cours), mais moins
-   fluides et moins concis qu'un résumé abstractif.
+3. **Résumés non évalués par des humains** : un petit LLM peut simplifier à l'excès ;
+   grilles de relecture prêtes, ROUGE à calculer.
 4. **Requêtes bloquantes** pendant les traitements d'IA (minuteur affiché).
 5. **Pas d'OCR**, figures non traitées.
 6. **Démonstration sur `runserver`** ; réglages de production prêts mais non déployés.
 
 ## 9. Démonstration conseillée (≈ 5 minutes)
+
+En ligne de commande : `python manage.py demo --sans-llm` (instantané) ou
+`python manage.py demo` (complet, avec le LLM). Dans l'interface :
 
 1. Connexion, tableau de bord.
 2. Import d'un PDF par glisser-déposer ; détail du cours (pages, passages).

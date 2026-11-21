@@ -10,6 +10,19 @@ LLM reste interchangeable (Ollama, Gemini ou Anthropic, une ligne dans `.env`).
 
 Bilan pour la soutenance (état de chaque fonctionnalité, résultats mesurés, limites) : [`BILAN.md`](BILAN.md).
 
+**Démarrage rapide** (une fois les prérequis de la section 3 installés) :
+
+```powershell
+git clone https://github.com/hadirbejaoui/educational_assistant. educational_assistant
+cd educational_assistant
+python -m venv .venv ; .\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+Copy-Item .env.example .env          # puis compléter .env (section 4)
+python manage.py migrate
+python manage.py demo --sans-llm     # démonstration en ligne de commande (section 3.6)
+python manage.py runserver           # puis http://127.0.0.1:8000
+```
+
 ---
 
 ## 1. Fonctionnalités
@@ -27,7 +40,7 @@ Bilan pour la soutenance (état de chaque fonctionnalité, résultats mesurés, 
 
 ```
 config/          réglages (settings.py = développement, settings_production.py = production), URLs
-core/            rôles et accès (permissions.py), tableau de bord, pagination, limitation de fréquence, en-têtes de sécurité, balises d'interface
+core/            accès aux cours (permissions.py), tableau de bord, pagination, limitation de fréquence, en-têtes de sécurité, balises d'interface, commandes demo et export_examples
 accounts/        utilisateurs (modèle User personnalisé, e-mail unique)
 courses/         documents, pages, passages ; services : extraction, nettoyage, découpage, embeddings, recherche
 summaries/       résumés ; services : sections, fournisseurs (LLM, Hugging Face mT5, extractif)
@@ -39,6 +52,7 @@ static/css/      design system : tokens, base, layout, components, pages
 static/js/       JavaScript classique : main (menu, chargements), chat, quiz, upload
 evaluation/      questions d'évaluation sur les cours réels, grilles de relecture
 scripts/         sauvegarde et restauration (PowerShell)
+demo/            cours d'exemple utilisé par la commande de démonstration
 ```
 
 Règle suivie partout : **la logique métier est dans `services/`**, les vues ne font que
@@ -109,7 +123,7 @@ pgvector n'est pas fourni par l'installeur PostgreSQL. Il faut le compiler une f
 ### 3.3 Projet
 
 ```powershell
-git clone <url-du-depot> educational_assistant
+git clone https://github.com/hadirbejaoui/educational_assistant. educational_assistant
 cd educational_assistant
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
@@ -145,6 +159,29 @@ python manage.py runserver
 Puis ouvrir http://127.0.0.1:8000. Après une mise à jour du CSS, un seul **Ctrl+F5**
 suffit : les fichiers statiques portent ensuite une version dans leur URL (`?v=...`).
 
+### 3.6 Démonstration
+
+La commande `demo` déroule tout le pipeline dans le terminal, sur un cours d'exemple
+fourni (`demo/cours_exemple.txt`), sans passer par l'interface :
+
+```powershell
+python manage.py demo --sans-llm            # sans Ollama : prétraitement, indexation, recherche, résumés extractifs
+python manage.py demo                       # complet : résumés par LLM, QCM corrigé, chatbot (≈ 5 à 10 min)
+python manage.py demo --fichier cours.pdf   # sur votre propre document (PDF ou TXT)
+python manage.py demo --question "..."      # avec votre question au chatbot
+```
+
+Étapes affichées : import et découpage, indexation, recherche hybride (3 meilleurs
+passages avec pages et scores), résumés court / moyen / détaillé, QCM de 3 questions
+avec la bonne réponse et l'explication, puis deux questions au chatbot (l'une sur le
+cours, citée ; l'autre hors cours, refusée). Un compte temporaire est créé puis supprimé
+avec tout ce qu'il contient ; `--garder` le conserve pour l'ouvrir ensuite dans
+l'interface.
+
+Parcours conseillé dans l'interface : créer un compte, importer un cours, ouvrir
+« Résumés » (trois onglets), générer un quiz et le passer, poser une question au chatbot
+(sources dépliables), puis une question hors cours (refus immédiat).
+
 ## 4. Variables d'environnement (`.env`)
 
 Le fichier `.env.example` liste et commente toutes les variables. Les principales :
@@ -171,6 +208,7 @@ Le fichier `.env.example` liste et commente toutes les variables. Les principale
 
 | Commande | Usage |
 |---|---|
+| `python manage.py demo [--sans-llm] [--fichier F] [--garder]` | démonstration de bout en bout sur un cours d'exemple (section 3.6) |
 | `python manage.py index_documents [--document ID] [--force]` | calcule les embeddings des passages |
 | `python manage.py reprocess_documents [--document ID]` | ré-extrait, re-découpe et réindexe (après un changement du découpage) |
 | `python manage.py rag_grep ID "texte"` | liste les passages contenant un texte |

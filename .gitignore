@@ -11,3 +11,9 @@ logs/
 backups/
 .coverage
 htmlcov/
+
+# Rapport universitaire : généré localement, non publié
+rapport_final/
+
+# Raccourcis Windows
+*.lnk
